@@ -1,65 +1,60 @@
 # Git Guidelines
 
-This document describes the Git branching strategy and contribution workflow for this project.
+This document describes the Git branching strategy and contribution workflow for this project, following Jira User Story-based development.
 
 ## Branching Strategy
 
 - **main**  
-    - Always contains stable, production-ready code.  
-    - Do not commit directly to `main`.
+    - Always contains stable, production-ready code
+    - Do not commit directly to `main`
 
-- **feature/branch-name**  
-    - Use this for developing new features or making changes.  
-    - Each feature should have its own branch (e.g., `feature/login-page`).
+- **ISSUEID-ISSUETITLE-**  
+    - Create a new branch for each Jira **User Story**
+    - Branches should be created via Jira's **"Create branch"** button  
+    - Jira will automatically suggest a branch name in the format: **ISSUEID-ISSUETITLE-**
+    - Use the suggested branch name exactly as it appears. Do not rename or modify it
 
 ## Development Workflow
 
-1. Pull the latest changes from `main`
+1. In Jira, go to the User Story and click **"Create branch"**  
+   - Select the target GitHub repository  
+   - Ensure the base branch is set to `main`  
+   - Use the suggested branch name
+
+2. In your local environment, fetch the latest remote branches
 
 ```bash
-    git checkout main
-    git pull origin main
+    git fetch origin
 ```
 
-2.	Create a new feature branch
+3.	Check out the newly created remote branch locally
 
 ```bash
-    git checkout -b feature/your-feature-name
+   git checkout -b branch-name origin/branch-name
 ```
 
-3.	Make your changes and commit regularly
+4.	Make your changes and commit regularly
 
 ```bash
-    git add .
-    git commit -m "feat: Add login form validation"
+   git add .
 ```
 
-4.	Push your branch to GitHub
+5.	Commit your changes using the Jira Sub-task screen
+
+- Go to the corresponding Subtask in Jira
+- Click **“Create commit”**
+- Copy the suggested commit command
 
 ```bash
-    git push origin feature/your-feature-name
+    git commit -m "ISSUEID <message>"
 ```
 
-5.	Create a Pull Request (PR)
+6.	Push your branch to GitHub
 
-    - Use a clear and concise title
-    - Describe the purpose of the change
-    - Link related issues if any
-    - Request a review from a teammate
+```bash
+   git push origin branch-name
+```
 
-6.	After approval, merge the PR into main
+7.	Create a Pull Request (PR)
 
-## Commit Message Convention
-
-- **Format:**
-
-<type>: <short description>
-
-- **Types:**
-
-    - `feat`: A new feature  
-    - `fix`: A bug fix  
-    - `refactor`: Code restructuring without behavior change  
-    - `docs`: Documentation-only changes  
-    - `style`: Code formatting (e.g., spaces, indentation)  
-    - `test`: Adding or modifying tests
+8.	After approval, merge the PR into main

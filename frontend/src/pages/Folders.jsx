@@ -45,6 +45,33 @@ const Folders = () => {
         }
     };
 
+    const handleRename = (id, currentName) => {
+        setEditingFolderId(id);
+        setEditedName(currentName);
+    };
+
+    const handleRenameSubmit = async (id) => {
+        if (!editedName.trim()) return;
+
+        setLoading(true);
+        try {
+            const response = await axiosInstance.put(
+                `/api/folders/${id}`,
+                { name: editedName },
+                { headers: { Authorization: `Bearer ${user.token}` } }
+            );
+            setFolders((prev) =>
+                prev.map((f) => (f.id === id ? { ...f, name: response.data.name } : f))
+            );
+            setEditingFolderId(null);
+            setEditedName('');
+        } catch (error) {
+            alert('Failed to rename folder. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="max-w-md mx-auto mt-20">
         <form onSubmit={handleCreate} className="bg-white p-6 shadow-md rounded">

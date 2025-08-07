@@ -43,7 +43,7 @@ const createFolder = async (req, res) => {
     }
 };
 
-// PUT /api/folders
+// PUT /api/folders/:id
 const updateFolder = async (req, res) => {
   const { name } = req.body;
 

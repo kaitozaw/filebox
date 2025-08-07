@@ -48,8 +48,6 @@ jobs:
             npm ci
             echo "Build skipped. Run manually via SSH."
         
-        ### ssh -i Mykeypair636.pem ubuntu@<your-ec2-public-ip>
-
         ### Set up Environment Variables ###
         - name: Set Environment Variables
           working-directory: ./backend

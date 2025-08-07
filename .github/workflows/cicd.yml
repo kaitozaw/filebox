@@ -45,8 +45,8 @@ jobs:
           working-directory: ./frontend
           run: |
             rm -rf ./build
-            npm ci
-            npm run build
+            npm ci --silent
+            npm run build --silent
 
         ### Set up Environment Variables ###
         - name: Set Environment Variables

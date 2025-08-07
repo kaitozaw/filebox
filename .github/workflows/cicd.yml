@@ -1,0 +1,77 @@
+name: CI/CD
+
+on:
+    push:
+        branches:
+            - main
+jobs:
+    build-test-deploy:
+        name: Build, Test & Deploy
+        runs-on: self-hosted
+
+        strategy:
+            matrix:
+                node-version: [22]
+        
+        environment: production
+
+        steps:
+
+        ### Check out the repository code ###
+        - name: Checkout Repository
+          uses: actions/checkout@v3
+
+        ### Set up the specified Node.js version from the matrix ###
+        - name: Setup Node.js ${{ matrix.node-version }}
+          uses: actions/setup-node@v3
+          with:
+            node-version: ${{ matrix.node-version }}
+        
+        ### Stop and clean up any existing PM2 processes from previous runs ###
+        - name: Stop All PM2 Processes (if running)
+          run: |
+            pm2 list || true
+            pm2 stop all || true
+        
+        ### Install Dependencies ###
+        - name: Install Root Dependencies
+          run: npm ci
+        
+        - name: Install Backend Dependencies
+          working-directory: ./backend
+          run: npm ci
+
+        - name: Install Frontend Dependencies
+          working-directory: ./frontend
+          run: |
+            rm -rf ./build
+            npm ci
+            npm run build
+
+        ### Set up Environment Variables ###
+        - name: Set Environment Variables
+          working-directory: ./backend
+          run: |
+            echo "${{ secrets.PROD }}" > .env
+            cat .env
+
+        ### Run Backend Tests ###
+        - name: Run Backend Tests
+          working-directory: ./backend
+          env:
+            MONGO_URI: ${{ secrets.MONGO_URI }}
+            JWT_SECRET: ${{ secrets.JWT_SECRET }}
+            PORT: ${{ secrets.PORT }}
+          run: npm test
+        
+        ### Deploy / Start Applications ###
+        - name: Start Backend with PM2
+          working-directory: ./backend
+          run: pm2 start server.js --name backend
+        
+        - name: Start Frontend with PM2
+          working-directory: ./frontend
+          run: pm2 serve build 3000 --name frontend --spa
+
+        - name: Confirm PM2 Status
+          run: pm2 list

@@ -25,6 +25,26 @@ const Folders = () => {
         fetchFolders();
     }, [user.token]);
 
+    const handleCreate = async (e) => {
+        e.preventDefault();
+        if (!folderName.trim()) return;
+
+        setLoading(true);
+        try {
+            const response = await axiosInstance.post(
+                '/api/folders',
+                { name: folderName },
+                { headers: { Authorization: `Bearer ${user.token}` } }
+            );
+            setFolders([...folders, response.data]);
+            setFolderName('');
+        } catch (error) {
+            alert('Failed to create folder. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="max-w-md mx-auto mt-20">
         <form onSubmit={handleCreate} className="bg-white p-6 shadow-md rounded">

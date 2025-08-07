@@ -41,12 +41,12 @@ jobs:
           working-directory: ./backend
           run: npm ci
 
-        - name: Install Frontend Dependencies
+        - name: Install Frontend Dependencies # Use npm install instead of npm ci to reduce memory usage
           working-directory: ./frontend
           run: |
             rm -rf ./build
-            npm ci
-            echo "Build skipped. Run manually via SSH."
+            npm install --prefer-offline --silent
+            npm run build
         
         ### Set up Environment Variables ###
         - name: Set Environment Variables

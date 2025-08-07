@@ -46,7 +46,7 @@ This document describes the Git branching strategy and contribution workflow for
 - Copy the suggested commit command
 
 ```bash
-    git commit -m "ISSUEID <message>"
+    git commit -m "ISSUEID ISSUETITLE"
 ```
 
 6.	Push your branch to GitHub

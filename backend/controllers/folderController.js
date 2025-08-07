@@ -45,7 +45,7 @@ const createFolder = async (req, res) => {
 
 // PUT /api/folders/:id
 const updateFolder = async (req, res) => {
-  const { name } = req.body;
+    const { name } = req.body;
 
     try {
         if (!name) {
@@ -76,4 +76,25 @@ const updateFolder = async (req, res) => {
     }
 };
 
-module.exports = { getFolders, createFolder, updateFolder };
+// DELETE /api/folders/:id
+const deleteFolder = async (req, res) => {
+    try {
+        const folder = await Folder.findById(req.params.id);
+
+        if (!folder) {
+            return res.status(404).json({ message: 'Folder not found' });
+        }
+
+        if (folder.user.toString() !== req.user.id) {
+            return res.status(403).json({ message: 'Not authorized to delete this folder' });
+        }
+
+        await folder.deleteOne();
+
+        res.status(200).json({ message: 'Folder deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { getFolders, createFolder, updateFolder, deleteFolder };

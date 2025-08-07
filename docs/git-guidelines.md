@@ -30,13 +30,13 @@ This document describes the Git branching strategy and contribution workflow for
 3.	Check out the newly created remote branch locally
 
 ```bash
-   git checkout -b branch-name origin/branch-name
+    git checkout -b branch-name origin/branch-name
 ```
 
 4.	Make your changes and commit regularly
 
 ```bash
-   git add .
+    git add .
 ```
 
 5.	Commit your changes using the Jira Sub-task screen
@@ -52,7 +52,7 @@ This document describes the Git branching strategy and contribution workflow for
 6.	Push your branch to GitHub
 
 ```bash
-   git push origin branch-name
+    git push origin branch-name
 ```
 
 7.	Create a Pull Request (PR)

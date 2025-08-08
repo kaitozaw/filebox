@@ -66,6 +66,29 @@ const FileList = ({ folderId }) => {
         }
     };
 
+    const handleFileRename = (id, currentName) => {
+        setEditingFileId(id);
+        setEditedFileName(currentName);
+    };
+
+    const handleFileRenameSubmit = async (id) => {
+        if (!editedFileName.trim()) return;
+
+        try {
+            const response = await axiosInstance.put(
+                `/api/files/${id}`,
+                { name: editedFileName },
+            );
+            setFiles((prev) =>
+                prev.map((f) => (f._id === id ? { ...f, name: response.data.name } : f))
+            );
+            setEditingFileId(null);
+            setEditedFileName('');
+        } catch (error) {
+            alert('Failed to rename file.');
+        }
+    };
+
     return (
         <div className="mt-6 bg-white p-4 rounded shadow">
             <h2 className="text-lg font-bold mb-2">Files in Folder</h2>

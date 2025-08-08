@@ -93,4 +93,38 @@ const downloadFile = async (req, res) => {
     }
 };
 
-module.exports = { listFilesInFolder, uploadFile, upload, downloadFile };
+// PUT /api/files/:fileId
+const renameFile = async (req, res) => {
+    try {
+        const { name } = req.body;
+        
+        if (!name || !name.trim()) {
+            return res.status(400).json({ message: 'New file name is required' });
+        }
+
+        const file = await File.findById(req.params.fileId);
+        
+        if (!file) {
+            return res.status(404).json({ message: 'File not found' });
+        }
+
+        if (file.user.toString() !== req.user.id) {
+            return res.status(403).json({ message: 'Not authorized to rename this file' });
+        }
+
+        file.name = name;
+        const updated = await file.save();
+
+        res.status(200).json({
+            id: updated._id,
+            name: updated.name,
+            size: updated.size,
+            mimetype: updated.mimetype,
+            createdAt: updated.createdAt,
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { listFilesInFolder, uploadFile, upload, downloadFile, renameFile };

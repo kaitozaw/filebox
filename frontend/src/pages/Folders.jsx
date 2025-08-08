@@ -12,18 +12,16 @@ const Folders = () => {
 
     useEffect(() => {
         const fetchFolders = async () => {
-        try {
-            const response = await axiosInstance.get('/api/folders', {
-            headers: { Authorization: `Bearer ${user.token}` },
-            });
-            setFolders(response.data);
-        } catch (error) {
-            alert('Failed to load folders.');
-        }
+            try {
+                const response = await axiosInstance.get('/api/folders');
+                setFolders(response.data);
+            } catch (error) {
+                alert('Failed to load folders.');
+            }
         };
 
         fetchFolders();
-    }, [user.token]);
+    }, [user]);
 
     const handleCreate = async (e) => {
         e.preventDefault();
@@ -34,7 +32,6 @@ const Folders = () => {
             const response = await axiosInstance.post(
                 '/api/folders',
                 { name: folderName },
-                { headers: { Authorization: `Bearer ${user.token}` } }
             );
             setFolders([...folders, response.data]);
             setFolderName('');
@@ -58,7 +55,6 @@ const Folders = () => {
             const response = await axiosInstance.put(
                 `/api/folders/${id}`,
                 { name: editedName },
-                { headers: { Authorization: `Bearer ${user.token}` } }
             );
             setFolders((prev) =>
                 prev.map((f) => (f.id === id ? { ...f, name: response.data.name } : f))
@@ -67,6 +63,22 @@ const Folders = () => {
             setEditedName('');
         } catch (error) {
             alert('Failed to rename folder. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        const confirmed = window.confirm('Are you sure you want to delete this folder?');
+        if (!confirmed) return;
+
+        setLoading(true);
+        try {
+            await axiosInstance.delete(`/api/folders/${id}`);
+
+            setFolders((prev) => prev.filter((folder) => folder.id !== id));
+        } catch (error) {
+            alert('Failed to delete folder. Please try again.');
         } finally {
             setLoading(false);
         }

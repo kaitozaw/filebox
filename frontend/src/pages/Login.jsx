@@ -11,11 +11,11 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axiosInstance.post('/api/auth/login', formData);
-      login(response.data);
-      navigate('/tasks');
+        const response = await axiosInstance.post('/api/auth/login', formData);
+        login(response.data);
+        navigate('/folders');
     } catch (error) {
-      alert('Login failed. Please try again.');
+        alert('Login failed. Please try again.');
     }
   };
 

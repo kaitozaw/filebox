@@ -26,9 +26,14 @@ const listFilesInFolder = async (req, res) => {
     }
 };
 
+const UPLOAD_DIR = path.join(__dirname, '..', 'uploads');
+if (!fs.existsSync(UPLOAD_DIR)) {
+  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+}
+
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'uploads/');
+        cb(null, UPLOAD_DIR);
     },
     filename: function (req, file, cb) {
         const uniqueName = `${Date.now()}-${file.originalname}`;
@@ -59,7 +64,7 @@ const uploadFile = async (req, res) => {
             name: file.originalname,
             size: file.size,
             mimetype: file.mimetype,
-            filePath: file.path,  
+            filePath: path.join('uploads', path.basename(file.path)),  
         });
 
         res.status(201).json(newFile);
@@ -81,7 +86,7 @@ const downloadFile = async (req, res) => {
             return res.status(403).json({ message: 'Not authorized to download this file' });
         }
 
-        const savedFilePath = path.join(__dirname, '..', 'uploads', file.filePath);
+        const savedFilePath = path.isAbsolute(file.filePath)? file.filePath : path.join(__dirname, '..', file.filePath);
         
         if (!fs.existsSync(savedFilePath)) {
             return res.status(404).json({ message: 'File not found on server' });
@@ -127,4 +132,31 @@ const renameFile = async (req, res) => {
     }
 };
 
-module.exports = { listFilesInFolder, uploadFile, upload, downloadFile, renameFile };
+// DELETE /api/files/:fileId
+const deleteFile = async (req, res) => {
+    try {
+        const file = await File.findById(req.params.fileId);
+        
+        if (!file) {
+            return res.status(404).json({ message: 'File not found' });
+        }
+
+        if (file.user.toString() !== req.user.id) {
+            return res.status(403).json({ message: 'Not authorized to delete this file' });
+        }
+
+        const savedFilePath = path.join(__dirname, '..', 'uploads', file.filePath);
+
+        if (fs.existsSync(savedFilePath)) {
+            fs.unlinkSync(savedFilePath);
+        }
+
+        await file.deleteOne();
+
+        res.status(200).json({ message: 'File deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { listFilesInFolder, uploadFile, upload, downloadFile, renameFile, deleteFile };

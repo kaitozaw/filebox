@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../axiosConfig';
 
@@ -84,6 +85,12 @@ const Folders = () => {
         }
     };
 
+    const navigate = useNavigate();
+
+    const openFolder = (id) => {
+        navigate(`/files/in-folder/${id}`);
+    };
+
     return (
         <div className="max-w-md mx-auto mt-20">
             <form onSubmit={handleCreate} className="bg-white p-6 shadow-md rounded">
@@ -124,7 +131,12 @@ const Folders = () => {
                                 </>
                             ) : (
                                 <>
-                                    <span>{folder.name}</span>
+                                     <button
+                                        onClick={() => openFolder(folder._id ?? folder.id)}
+                                        className="text-left font-medium hover:underline"
+                                    >
+                                        {folder.name}
+                                    </button>
                                     <div className="flex space-x-2">
                                         <button
                                             onClick={() => handleRename(folder.id, folder.name)}

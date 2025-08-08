@@ -86,65 +86,65 @@ const Folders = () => {
 
     return (
         <div className="max-w-md mx-auto mt-20">
-        <form onSubmit={handleCreate} className="bg-white p-6 shadow-md rounded">
-            <h1 className="text-2xl font-bold mb-4 text-center">Create Folder</h1>
-            <input
-                type="text"
-                placeholder="Folder Name"
-                value={folderName}
-                onChange={(e) => setFolderName(e.target.value)}
-                className="w-full mb-4 p-2 border rounded"
-            />
-            <button type="submit" className="w-full bg-blue-600 text-white p-2 rounded">
-            {loading ? 'Creating...' : 'Create Folder'}
-            </button>
-        </form>
+            <form onSubmit={handleCreate} className="bg-white p-6 shadow-md rounded">
+                <h1 className="text-2xl font-bold mb-4 text-center">Create Folder</h1>
+                <input
+                    type="text"
+                    placeholder="Folder Name"
+                    value={folderName}
+                    onChange={(e) => setFolderName(e.target.value)}
+                    className="w-full mb-4 p-2 border rounded"
+                />
+                <button type="submit" className="w-full bg-blue-600 text-white p-2 rounded">
+                    {loading ? 'Creating...' : 'Create Folder'}
+                </button>
+            </form>
 
-        {folders.length > 0 && (
-            <ul className="mt-6 bg-white p-4 rounded shadow">
-            {folders.map((folder) => (
-                <li
-                key={folder.id}
-                className="border-b py-2 flex justify-between items-center"
-                >
-                {editingFolderId === folder.id ? (
-                    <>
-                    <input
-                        type="text"
-                        value={editedName}
-                        onChange={(e) => setEditedName(e.target.value)}
-                        className="border p-1 flex-1 mr-2"
-                    />
-                    <button
-                        onClick={() => handleRenameSubmit(folder.id)}
-                        className="text-sm text-white bg-green-500 px-2 py-1 rounded"
-                    >
-                        Save
-                    </button>
-                    </>
-                ) : (
-                    <>
-                    <span>{folder.name}</span>
-                    <div className="flex space-x-2">
-                        <button
-                            onClick={() => handleRename(folder.id, folder.name)}
-                            className="text-sm text-blue-500 underline"
+            {folders.length > 0 && (
+                <ul className="mt-6 bg-white p-4 rounded shadow">
+                    {folders.map((folder) => (
+                        <li
+                            key={folder.id}
+                            className="border-b py-2 flex justify-between items-center"
                         >
-                            Rename
-                        </button>
-                        <button
-                            onClick={() => handleDelete(folder.id)}
-                            className="text-sm text-red-500 underline"
-                        >
-                            Delete
-                        </button>
-                    </div>
-                    </>
-                )}
-                </li>
-            ))}
-            </ul>
-        )}
+                            {editingFolderId === folder.id ? (
+                                <>
+                                    <input
+                                        type="text"
+                                        value={editedName}
+                                        onChange={(e) => setEditedName(e.target.value)}
+                                        className="border p-1 flex-1 mr-2"
+                                    />
+                                    <button
+                                        onClick={() => handleRenameSubmit(folder.id)}
+                                        className="text-sm text-white bg-green-500 px-2 py-1 rounded"
+                                    >
+                                        Save
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <span>{folder.name}</span>
+                                    <div className="flex space-x-2">
+                                        <button
+                                            onClick={() => handleRename(folder.id, folder.name)}
+                                            className="text-sm text-blue-500 underline"
+                                        >
+                                            Rename
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(folder.id)}
+                                            className="text-sm text-red-500 underline"
+                                        >
+                                            Delete
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </li>
+                    ))}
+                </ul>
+            )}
         </div>
     );
 };

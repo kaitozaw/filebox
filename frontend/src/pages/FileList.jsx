@@ -26,6 +26,26 @@ const FileList = ({ folderId }) => {
         if (folderId && user) fetchFiles();
     }, [folderId, user]);
 
+    const handleUpload = async (e) => {
+        e.preventDefault();
+        if (!fileToUpload) return;
+
+        const formData = new FormData();
+        formData.append('file', fileToUpload);
+
+        try {
+            await axiosInstance.post(`/api/files/in-folder/${folderId}`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            setFileToUpload(null);
+            fetchFiles();
+        } catch (error) {
+            alert('Failed to upload file');
+        }
+    };
+
     return (
         <div className="mt-6 bg-white p-4 rounded shadow">
             <h2 className="text-lg font-bold mb-2">Files in Folder</h2>

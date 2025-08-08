@@ -184,4 +184,4 @@ const deleteFile = async (req, res) => {
     }
 };
 
-module.exports = { listFilesInFolder, uploadFile, upload, downloadFile, renameFile, deleteFile, generatePublicUrl };
+module.exports = { listFilesInFolder, downloadFile, upload, uploadFile, generatePublicUrl, renameFile, deleteFile };

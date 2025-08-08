@@ -4,6 +4,7 @@ const Folder = require('../models/Folder');
 const fs = require('fs');
 const multer = require('multer');
 const path = require('path');
+const { v4: uuidv4 } = require('uuid');
 
 // GET /api/files/in-folder/:folderId
 const listFilesInFolder = async (req, res) => {
@@ -21,6 +22,31 @@ const listFilesInFolder = async (req, res) => {
         const files = await File.find({ folder: folder._id }).sort({ createdAt: -1 });
 
         res.status(200).json(files);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// GET /api/files/:fileId/download
+const downloadFile = async (req, res) => {
+    try {
+        const file = await File.findById(req.params.fileId);
+
+        if (!file) {
+            return res.status(404).json({ message: 'File not found' });
+        }
+
+        if (file.user.toString() !== req.user.id) {
+            return res.status(403).json({ message: 'Not authorized to download this file' });
+        }
+
+        const savedFilePath = path.isAbsolute(file.filePath)? file.filePath : path.join(__dirname, '..', file.filePath);
+        
+        if (!fs.existsSync(savedFilePath)) {
+            return res.status(404).json({ message: 'File not found on server' });
+        }
+
+        res.download(savedFilePath, file.name);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -73,26 +99,25 @@ const uploadFile = async (req, res) => {
     }
 };
 
-// GET /api/files/:fileId/download
-const downloadFile = async (req, res) => {
+// POST /api/files/:fileId/share
+const generatePublicUrl = async (req, res) => {
     try {
         const file = await File.findById(req.params.fileId);
-
+        
         if (!file) {
             return res.status(404).json({ message: 'File not found' });
         }
 
         if (file.user.toString() !== req.user.id) {
-            return res.status(403).json({ message: 'Not authorized to download this file' });
+            return res.status(403).json({ message: 'Not authorized to share this file' });
         }
 
-        const savedFilePath = path.isAbsolute(file.filePath)? file.filePath : path.join(__dirname, '..', file.filePath);
-        
-        if (!fs.existsSync(savedFilePath)) {
-            return res.status(404).json({ message: 'File not found on server' });
-        }
+        file.publicId = uuidv4();
+        file.expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        await file.save();
 
-        res.download(savedFilePath, file.name);
+        const publicUrl = `${process.env.REACT_APP_API_BASE_URL}/public/${file.publicId}`;
+        res.status(200).json({ publicUrl });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -159,4 +184,4 @@ const deleteFile = async (req, res) => {
     }
 };
 
-module.exports = { listFilesInFolder, uploadFile, upload, downloadFile, renameFile, deleteFile };
+module.exports = { listFilesInFolder, downloadFile, upload, uploadFile, generatePublicUrl, renameFile, deleteFile };

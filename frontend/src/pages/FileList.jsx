@@ -1,30 +1,34 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../axiosConfig';
 
 const FileList = ({ folderId }) => {
     const { user } = useAuth();
+    const { folderId: folderIdParam } = useParams();
+    const effectiveFolderId = folderId ?? folderIdParam;
     const [files, setFiles] = useState([]);
     const [fileToUpload, setFileToUpload] = useState(null);
     const [editingFileId, setEditingFileId] = useState(null);
     const [editedFileName, setEditedFileName] = useState('');
     const [loading, setLoading] = useState(false);
 
-    const fetchFiles = async () => {
+    const loadFiles = useCallback(async () => {
+        if (!effectiveFolderId) return;
         setLoading(true);
         try {
-            const response = await axiosInstance.get(`/api/files/in-folder/${folderId}`);
-            setFiles(response.data);
-        } catch (error) {
+            const res = await axiosInstance.get(`/api/files/in-folder/${effectiveFolderId}`);
+            setFiles(res.data);
+        } catch {
             alert('Failed to fetch files');
         } finally {
             setLoading(false);
         }
-    };
+    }, [effectiveFolderId]);
 
     useEffect(() => {
-        if (folderId && user) fetchFiles();
-    }, [folderId, user]);
+        if (effectiveFolderId && user) loadFiles();
+    }, [effectiveFolderId, user, loadFiles]);
 
     const handleUpload = async (e) => {
         e.preventDefault();
@@ -34,13 +38,13 @@ const FileList = ({ folderId }) => {
         formData.append('file', fileToUpload);
 
         try {
-            await axiosInstance.post(`/api/files/in-folder/${folderId}`, formData, {
+            await axiosInstance.post(`/api/files/in-folder/${effectiveFolderId}`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
             });
             setFileToUpload(null);
-            fetchFiles();
+            await loadFiles();
         } catch (error) {
             alert('Failed to upload file');
         }
@@ -89,75 +93,83 @@ const FileList = ({ folderId }) => {
         }
     };
 
-    return (
-        <div className="mt-6 bg-white p-4 rounded shadow">
-            <h2 className="text-lg font-bold mb-2">Files in Folder</h2>
+    const handleDelete = async (fileId) => {
+        const confirmed = window.confirm('Are you sure you want to delete this file?');
+        if (!confirmed) return;
 
-            <form onSubmit={handleUpload} className="mb-4">
+        try {
+            await axiosInstance.delete(`/api/files/${fileId}`);
+            setFiles((prev) => prev.filter((file) => file._id !== fileId));
+        } catch (error) {
+            alert('Failed to delete file');
+        }
+    };
+
+    return (
+        <div className="max-w-md mx-auto mt-20">
+            <form onSubmit={handleUpload} className="bg-white p-6 shadow-md rounded">
+                <h1 className="text-2xl font-bold mb-4 text-center">Files in Folder</h1>
                 <input
                     type="file"
                     onChange={(e) => setFileToUpload(e.target.files[0])}
-                    className="mb-2"
+                    className="w-full mb-4 p-2 border rounded"
                 />
-                <button
-                    type="submit"
-                    className="bg-blue-500 text-white px-4 py-1 rounded"
-                >
-                    Upload
+                <button type="submit" className="w-full bg-blue-600 text-white p-2 rounded">
+                    {loading ? 'Uploading...' : 'Upload File'}
                 </button>
             </form>
 
-            <ul>
-                {files.map((file) => (
-                    <li
-                        key={file._id}
-                        className="border-b py-2 flex justify-between items-center"
-                    >
-                        {editingFileId === file._id ? (
-                            <>
-                                <input
-                                    type="text"
-                                    value={editedFileName}
-                                    onChange={(e) => setEditedFileName(e.target.value)}
-                                    className="border p-1 flex-1 mr-2"
-                                />
-                                <button
-                                    onClick={() => handleFileRenameSubmit(file._id)}
-                                    className="text-sm text-white bg-green-500 px-2 py-1 rounded"
-                                >
-                                    Save
-                                </button>
-                            </>
-                        ) : (
-                            <>
-                                <span>
-                                {file.name} ({(file.size / 1024).toFixed(1)} KB)
-                                </span>
-                                <div className="flex space-x-2">
+            {files.length > 0 && (
+                <ul className="mt-6 bg-white p-4 rounded shadow">
+                    {files.map((file) => (
+                        <li
+                            key={file._id}
+                            className="border-b py-2 flex justify-between items-center"
+                        >
+                            {editingFileId === file._id ? (
+                                <>
+                                    <input
+                                        type="text"
+                                        value={editedFileName}
+                                        onChange={(e) => setEditedFileName(e.target.value)}
+                                        className="border p-1 flex-1 mr-2"
+                                    />
                                     <button
-                                        onClick={() => handleDownload(file._id, file.name)}
-                                        className="text-sm text-green-600 underline"
+                                        onClick={() => handleFileRenameSubmit(file._id)}
+                                        className="text-sm text-white bg-green-500 px-2 py-1 rounded"
                                     >
-                                        Download
+                                        Save
                                     </button>
-                                    <button
-                                        onClick={() => handleFileRename(file._id, file.name)}
-                                        className="text-sm text-blue-500 underline"
-                                    >
-                                        Rename
-                                    </button>
-                                    <button
-                                        onClick={() => handleDelete(file._id)}
-                                        className="text-sm text-red-500 underline"
-                                    >
-                                        Delete
-                                    </button>
-                                </div>
-                            </>
-                        )}
-                    </li>
-                ))}
-            </ul>
+                                </>
+                            ) : (
+                                <>
+                                    <span>{file.name} ({(file.size / 1024).toFixed(1)} KB)</span>
+                                    <div className="flex space-x-2">
+                                        <button
+                                            onClick={() => handleDownload(file._id, file.name)}
+                                            className="text-sm text-green-600 underline"
+                                        >
+                                            Download
+                                        </button>
+                                        <button
+                                            onClick={() => handleFileRename(file._id, file.name)}
+                                            className="text-sm text-blue-500 underline"
+                                        >
+                                            Rename
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(file._id)}
+                                            className="text-sm text-red-500 underline"
+                                        >
+                                            Delete
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </li>
+                    ))}
+                </ul>
+            )}
         </div>
     );
 };

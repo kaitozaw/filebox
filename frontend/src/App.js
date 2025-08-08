@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
 import Folders from './pages/Folders';
+import FileList from './pages/FileList';
 import PrivateRoute from './routes/PrivateRoute';
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
                 <Route path="/register" element={<Register />} />
                 <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
                 <Route path="/folders" element={<PrivateRoute><Folders /></PrivateRoute>} />
+                <Route path="/files/in-folder/:folderId" element={<PrivateRoute><FileList /></PrivateRoute>} />
             </Routes>
         </Router>
     );

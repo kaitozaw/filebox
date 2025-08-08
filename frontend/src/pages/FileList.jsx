@@ -46,6 +46,26 @@ const FileList = ({ folderId }) => {
         }
     };
 
+    const handleDownload = async (fileId, fileName) => {
+        try {
+            const response = await axiosInstance.get(`/api/files/${fileId}/download`, {
+                responseType: 'blob',
+            });
+
+            const blob = new Blob([response.data]);
+            const url = window.URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', fileName);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (error) {
+            alert('Failed to download file');
+        }
+    };
+
     return (
         <div className="mt-6 bg-white p-4 rounded shadow">
             <h2 className="text-lg font-bold mb-2">Files in Folder</h2>

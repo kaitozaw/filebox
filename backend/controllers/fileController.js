@@ -1,6 +1,7 @@
 
 const File = require('../models/File');
 const Folder = require('../models/Folder');
+const fs = require('fs');
 const multer = require('multer');
 const path = require('path');
 
@@ -67,4 +68,29 @@ const uploadFile = async (req, res) => {
     }
 };
 
-module.exports = { listFilesInFolder, uploadFile, upload };
+// GET /api/files/:fileId/download
+const downloadFile = async (req, res) => {
+    try {
+        const file = await File.findById(req.params.fileId);
+
+        if (!file) {
+            return res.status(404).json({ message: 'File not found' });
+        }
+
+        if (file.user.toString() !== req.user.id) {
+            return res.status(403).json({ message: 'Not authorized to download this file' });
+        }
+
+        const savedFilePath = path.join(__dirname, '..', 'uploads', file.filePath);
+        
+        if (!fs.existsSync(savedFilePath)) {
+            return res.status(404).json({ message: 'File not found on server' });
+        }
+
+        res.download(savedFilePath, file.name);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { listFilesInFolder, uploadFile, upload, downloadFile };

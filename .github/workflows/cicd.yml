@@ -49,10 +49,16 @@ jobs:
             npm run build
         
         ### Set up Environment Variables ###
-        - name: Set Environment Variables
+        - name: Set Environment Variables for Backend
           working-directory: ./backend
           run: |
-            echo "${{ secrets.PROD }}" > .env
+            echo "${{ secrets.PROD_BACKEND }}" > .env
+            cat .env
+
+        - name: Set Environment Variables for Frontend
+          working-directory: ./frontend
+          run: |
+            echo "${{ secrets.PROD_FRONTEND }}" > .env
             cat .env
 
         ### Run Backend Tests ###
@@ -62,6 +68,7 @@ jobs:
             MONGO_URI: ${{ secrets.MONGO_URI }}
             JWT_SECRET: ${{ secrets.JWT_SECRET }}
             PORT: ${{ secrets.PORT }}
+            BASE_URL: ${{ secrets.BASE_URL }}
           run: npm test
         
         ### Deploy / Start Applications ###

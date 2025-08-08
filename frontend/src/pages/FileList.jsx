@@ -36,7 +36,8 @@ const FileList = ({ folderId }) => {
                 responseType: 'blob',
             });
 
-            const blob = new Blob([response.data]);
+            const contentType = response.headers['content-type'] || 'application/octet-stream';
+            const blob = new Blob([response.data], { type: contentType });
             const url = window.URL.createObjectURL(blob);
 
             const link = document.createElement('a');

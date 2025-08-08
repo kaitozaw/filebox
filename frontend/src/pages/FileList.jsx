@@ -30,6 +30,26 @@ const FileList = ({ folderId }) => {
         if (effectiveFolderId && user) loadFiles();
     }, [effectiveFolderId, user, loadFiles]);
 
+    const handleDownload = async (fileId, fileName) => {
+        try {
+            const response = await axiosInstance.get(`/api/files/${fileId}/download`, {
+                responseType: 'blob',
+            });
+
+            const blob = new Blob([response.data]);
+            const url = window.URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', fileName);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (error) {
+            alert('Failed to download file');
+        }
+    };
+
     const handleUpload = async (e) => {
         e.preventDefault();
         if (!fileToUpload) return;
@@ -50,23 +70,13 @@ const FileList = ({ folderId }) => {
         }
     };
 
-    const handleDownload = async (fileId, fileName) => {
+    const handleShare = async (fileId) => {
         try {
-            const response = await axiosInstance.get(`/api/files/${fileId}/download`, {
-                responseType: 'blob',
-            });
-
-            const blob = new Blob([response.data]);
-            const url = window.URL.createObjectURL(blob);
-
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', fileName);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
+            const response = await axiosInstance.post(`/api/files/${fileId}/share`, {});
+            const url = response.data.publicUrl;
+            window.prompt('Share this link:', url);
         } catch (error) {
-            alert('Failed to download file');
+            alert('Failed to generate share link');
         }
     };
 
@@ -150,6 +160,12 @@ const FileList = ({ folderId }) => {
                                             className="text-sm text-green-600 underline"
                                         >
                                             Download
+                                        </button>
+                                        <button
+                                            onClick={() => handleShare(file._id)}
+                                            className="text-sm text-purple-500 underline"
+                                        >
+                                            Share
                                         </button>
                                         <button
                                             onClick={() => handleFileRename(file._id, file.name)}

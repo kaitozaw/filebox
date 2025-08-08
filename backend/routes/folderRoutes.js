@@ -1,4 +1,3 @@
-
 const express = require('express');
 const { getFolders, createFolder, updateFolder, deleteFolder } = require('../controllers/folderController');
 const { protect } = require('../middleware/authMiddleware');

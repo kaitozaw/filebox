@@ -1,4 +1,3 @@
-
 const Folder = require('../models/Folder');
 
 // GET /api/folders

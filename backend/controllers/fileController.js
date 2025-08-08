@@ -1,8 +1,9 @@
-
+const contentDisposition = require('content-disposition');
 const File = require('../models/File');
 const Folder = require('../models/Folder');
 const fs = require('fs');
 const multer = require('multer');
+const mime = require('mime');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 
@@ -116,7 +117,7 @@ const generatePublicUrl = async (req, res) => {
         file.expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
         await file.save();
 
-        const publicUrl = `${process.env.REACT_APP_API_BASE_URL}/public/${file.publicId}`;
+        const publicUrl = `${process.env.BASE_URL}/api/public/${file.publicId}`;
         res.status(200).json({ publicUrl });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -170,7 +171,7 @@ const deleteFile = async (req, res) => {
             return res.status(403).json({ message: 'Not authorized to delete this file' });
         }
 
-        const savedFilePath = path.join(__dirname, '..', 'uploads', file.filePath);
+        const savedFilePath = path.isAbsolute(file.filePath)? file.filePath : path.join(__dirname, '..', file.filePath);
 
         if (fs.existsSync(savedFilePath)) {
             fs.unlinkSync(savedFilePath);
@@ -184,4 +185,37 @@ const deleteFile = async (req, res) => {
     }
 };
 
-module.exports = { listFilesInFolder, downloadFile, upload, uploadFile, generatePublicUrl, renameFile, deleteFile };
+// GET /api/public//:publicId
+const accessPublicFile = async (req, res) => {
+    try {
+        const file = await File.findOne({ publicId: req.params.publicId });
+
+        if (!file) {
+            return res.status(404).json({ message: 'Shared file not found' });
+        }
+        
+        if (file.expiresAt && new Date() > file.expiresAt) {
+            return res.status(410).json({ message: 'This link has expired.' });
+        }
+
+        const savedFilePath = path.isAbsolute(file.filePath)? file.filePath : path.join(__dirname, '..', file.filePath);
+
+        if (!fs.existsSync(savedFilePath)) {
+            return res.status(404).json({ message: 'File not found on server' });
+        }
+
+        const stat = fs.statSync(savedFilePath);
+        const type =
+        file.mimetype || mime.getType(file.name) || 'application/octet-stream';
+
+        res.setHeader('Content-Type', type);
+        res.setHeader('Content-Length', stat.size);
+        res.setHeader('Content-Disposition', contentDisposition(file.name));
+
+        fs.createReadStream(savedFilePath).pipe(res);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { listFilesInFolder, downloadFile, upload, uploadFile, generatePublicUrl, renameFile, deleteFile, accessPublicFile };

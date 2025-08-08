@@ -184,4 +184,29 @@ const deleteFile = async (req, res) => {
     }
 };
 
-module.exports = { listFilesInFolder, downloadFile, upload, uploadFile, generatePublicUrl, renameFile, deleteFile };
+// GET /api/public//:publicId
+const accessPublicFile = async (req, res) => {
+    try {
+        const file = await File.findOne({ publicId: req.params.publicId });
+
+        if (!file) {
+            return res.status(404).json({ message: 'Shared file not found' });
+        }
+        
+        if (file.expiresAt && new Date() > file.expiresAt) {
+            return res.status(410).json({ message: 'This link has expired.' });
+        }
+
+        const savedFilePath = path.isAbsolute(file.filePath)? file.filePath : path.join(__dirname, '..', file.filePath);
+
+        if (!fs.existsSync(savedFilePath)) {
+            return res.status(404).json({ message: 'File not found on server' });
+        }
+
+        res.download(savedFilePath, file.name);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { listFilesInFolder, downloadFile, upload, uploadFile, generatePublicUrl, renameFile, deleteFile, accessPublicFile };

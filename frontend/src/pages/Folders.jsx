@@ -14,7 +14,7 @@ const Folders = () => {
     useEffect(() => {
         const fetchFolders = async () => {
             try {
-                const response = await axiosInstance.get('/api/folders');
+                const response = await axiosInstance.get('/folders');
                 setFolders(response.data);
             } catch (error) {
                 alert('Failed to load folders.');
@@ -31,7 +31,7 @@ const Folders = () => {
         setLoading(true);
         try {
             const response = await axiosInstance.post(
-                '/api/folders',
+                '/folders',
                 { name: folderName },
             );
             setFolders([...folders, response.data]);
@@ -54,7 +54,7 @@ const Folders = () => {
         setLoading(true);
         try {
             const response = await axiosInstance.put(
-                `/api/folders/${id}`,
+                `/folders/${id}`,
                 { name: editedName },
             );
             setFolders((prev) =>
@@ -75,7 +75,7 @@ const Folders = () => {
 
         setLoading(true);
         try {
-            await axiosInstance.delete(`/api/folders/${id}`);
+            await axiosInstance.delete(`/folders/${id}`);
 
             setFolders((prev) => prev.filter((folder) => folder.id !== id));
         } catch (error) {

@@ -17,7 +17,7 @@ const FileList = ({ folderId }) => {
         if (!effectiveFolderId) return;
         setLoading(true);
         try {
-            const res = await axiosInstance.get(`/api/files/in-folder/${effectiveFolderId}`);
+            const res = await axiosInstance.get(`/files/in-folder/${effectiveFolderId}`);
             setFiles(res.data);
         } catch {
             alert('Failed to fetch files');
@@ -32,7 +32,7 @@ const FileList = ({ folderId }) => {
 
     const handleDownload = async (fileId, fileName) => {
         try {
-            const response = await axiosInstance.get(`/api/files/${fileId}/download`, {
+            const response = await axiosInstance.get(`/files/${fileId}/download`, {
                 responseType: 'blob',
             });
 
@@ -59,7 +59,7 @@ const FileList = ({ folderId }) => {
         formData.append('file', fileToUpload);
 
         try {
-            await axiosInstance.post(`/api/files/in-folder/${effectiveFolderId}`, formData, {
+            await axiosInstance.post(`/files/in-folder/${effectiveFolderId}`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
@@ -73,7 +73,7 @@ const FileList = ({ folderId }) => {
 
     const handleShare = async (fileId) => {
         try {
-            const response = await axiosInstance.post(`/api/files/${fileId}/share`, {});
+            const response = await axiosInstance.post(`/files/${fileId}/share`, {});
             const url = response.data.publicUrl;
             window.prompt('Share this link:', url);
         } catch (error) {
@@ -91,7 +91,7 @@ const FileList = ({ folderId }) => {
 
         try {
             const response = await axiosInstance.put(
-                `/api/files/${id}`,
+                `/files/${id}`,
                 { name: editedFileName },
             );
             setFiles((prev) =>
@@ -109,7 +109,7 @@ const FileList = ({ folderId }) => {
         if (!confirmed) return;
 
         try {
-            await axiosInstance.delete(`/api/files/${fileId}`);
+            await axiosInstance.delete(`/files/${fileId}`);
             setFiles((prev) => prev.filter((file) => file._id !== fileId));
         } catch (error) {
             alert('Failed to delete file');

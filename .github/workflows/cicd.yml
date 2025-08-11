@@ -17,7 +17,7 @@ jobs:
 
         steps:
 
-        ### Check out the repository code 1###
+        ### Check out the repository code ###
         - name: Checkout Repository
           uses: actions/checkout@v3
 

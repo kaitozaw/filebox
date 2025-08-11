@@ -185,7 +185,7 @@ const deleteFile = async (req, res) => {
     }
 };
 
-// GET /api/public//:publicId
+// GET /api/public/:publicId
 const accessPublicFile = async (req, res) => {
     try {
         const file = await File.findOne({ publicId: req.params.publicId });

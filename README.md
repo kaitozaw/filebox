@@ -1,4 +1,4 @@
-**Project Setup Instructions**
+## Project Setup Instructions
 
 ### 1. Setup EC2 Instance
 
@@ -13,11 +13,15 @@
 - Navigate to **Setting > Actions secrets and variables > Repository secrets** and paste the value from /backend/.env into **PROD_BACKEND**, but update BASE_URL to "http://{Public IPv4 address}"
 
 ### 3. Run CI/CD Github Actions
+
 - Push to the remote main branch and run cicd.yml
 
-**Public URL of the Project**
-http://13.238.159.193
 
-**How to Login**
+## Public URL of the Project
+
+- http://13.238.159.193
+
+
+## How to Login
 - email: kaitozaw@gmail.com
 - password: password

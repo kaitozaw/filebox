@@ -11,26 +11,26 @@ const Navbar = () => {
     };
 
     return (
-        <nav className="bg-blue-600 text-white p-4 flex justify-between items-center">
-            <Link to="/" className="text-2xl font-bold">Filebox</Link>
-            <div>
+        <nav className="bg-gradient-to-r from-indigo-600 to-blue-500 text-white p-4 flex justify-between items-center shadow-lg">
+            <Link to="/" className="text-3xl font-extrabold tracking-wide">Filebox</Link>
+            <div className="flex items-center space-x-4">
                 {user ? (
                     <>
-                        <Link to="/folders" className="mr-4">Folders</Link>
-                        <Link to="/profile" className="mr-4">Profile</Link>
+                        <Link to="/folders" className="mr-4 hover:text-yellow-200 transition duration-300">Folders</Link>
+                        <Link to="/profile" className="mr-4 hover:text-yellow-200 transition duration-300">Profile</Link>
                         <button
                             onClick={handleLogout}
-                            className="bg-red-500 px-4 py-2 rounded hover:bg-red-700"
+                            className="bg-pink-500 px-4 py-2 rounded-full hover:bg-pink-700 transition duration-300"
                         >
                             Logout
                         </button>
                     </>
                 ) : (
                     <>
-                        <Link to="/login" className="mr-4">Login</Link>
+                        <Link to="/login" className="mr-4 hover:text-yellow-200 transition duration-300">Login</Link>
                         <Link
                             to="/register"
-                            className="bg-green-500 px-4 py-2 rounded hover:bg-green-700"
+                            className="bg-green-500 px-4 py-2 rounded-full hover:bg-green-700 transition duration-300"
                         >
                             Register
                         </Link>

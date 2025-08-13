@@ -117,25 +117,25 @@ const FileList = ({ folderId }) => {
     };
 
     return (
-        <div className="max-w-md mx-auto mt-20">
-            <form onSubmit={handleUpload} className="bg-white p-6 shadow-md rounded">
-                <h1 className="text-2xl font-bold mb-4 text-center">Files in Folder</h1>
+        <div className="max-w-lg mx-auto mt-20 px-6">
+            <form onSubmit={handleUpload} className="bg-white rounded-2xl shadow-lg p-6 space-y-4">
+                <h1 className="text-3xl font-extrabold tracking-wide text-slate-900 text-center mb-2">Files in Folder</h1>
                 <input
                     type="file"
                     onChange={(e) => setFileToUpload(e.target.files[0])}
-                    className="w-full mb-4 p-2 border rounded"
+                    className="w-full rounded-xl border border-slate-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-300"
                 />
-                <button type="submit" className="w-full bg-blue-600 text-white p-2 rounded">
+                <button type="submit" className="w-full bg-pink-500 text-white px-5 py-2.5 rounded-full hover:bg-pink-700 transition duration-300">
                     {loading ? 'Uploading...' : 'Upload File'}
                 </button>
             </form>
 
             {files.length > 0 && (
-                <ul className="mt-6 bg-white p-4 rounded shadow">
+                <ul className="mt-6 bg-white rounded-2xl shadow-lg p-6 divide-y divide-slate-200">
                     {files.map((file) => (
                         <li
                             key={file._id}
-                            className="border-b py-2 flex justify-between items-center"
+                            className="py-3 flex justify-between items-center hover:bg-slate-50 transition duration-300 px-2 rounded-xl"
                         >
                             {editingFileId === file._id ? (
                                 <>
@@ -143,40 +143,40 @@ const FileList = ({ folderId }) => {
                                         type="text"
                                         value={editedFileName}
                                         onChange={(e) => setEditedFileName(e.target.value)}
-                                        className="border p-1 flex-1 mr-2"
+                                        className="flex-1 mr-2 rounded-xl border border-slate-300 px-3 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-300"
                                     />
                                     <button
                                         onClick={() => handleFileRenameSubmit(file._id)}
-                                        className="text-sm text-white bg-green-500 px-2 py-1 rounded"
+                                        className="text-sm text-white bg-green-500 px-3 py-1.5 rounded-full hover:bg-green-700 transition duration-300"
                                     >
                                         Save
                                     </button>
                                 </>
                             ) : (
                                 <>
-                                    <span>{file.name} ({(file.size / 1024).toFixed(1)} KB)</span>
+                                    <span className="text-slate-800">{file.name} ({(file.size / 1024).toFixed(1)} KB)</span>
                                     <div className="flex space-x-2">
                                         <button
                                             onClick={() => handleDownload(file._id, file.name)}
-                                            className="text-sm text-green-600 underline"
+                                            className="text-sm text-green-600 hover:text-yellow-200 transition duration-300"
                                         >
                                             Download
                                         </button>
                                         <button
                                             onClick={() => handleShare(file._id)}
-                                            className="text-sm text-purple-500 underline"
+                                            className="text-sm text-purple-500 hover:text-yellow-200 transition duration-30"
                                         >
                                             Share
                                         </button>
                                         <button
                                             onClick={() => handleFileRename(file._id, file.name)}
-                                            className="text-sm text-blue-500 underline"
+                                            className="text-sm text-indigo-600 hover:text-yellow-200 transition duration-300"
                                         >
                                             Rename
                                         </button>
                                         <button
                                             onClick={() => handleDelete(file._id)}
-                                            className="text-sm text-red-500 underline"
+                                            className="text-sm text-pink-600 hover:text-yellow-200 transition duration-300"
                                         >
                                             Delete
                                         </button>

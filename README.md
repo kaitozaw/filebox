@@ -22,6 +22,6 @@
 - http://13.238.159.193
 
 
-## How to Login to the Project
+## How to Login
 - email: kaitozaw@gmail.com
 - password: password

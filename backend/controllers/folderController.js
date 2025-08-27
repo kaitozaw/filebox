@@ -1,6 +1,6 @@
 const Folder = require('../models/Folder');
 
-// GET /api/folders
+// GET /api/folderss
 const getFolders = async (req, res) => {
     try {
         const folders = await Folder.find({ user: req.user.id }).sort({ createdAt: -1 });

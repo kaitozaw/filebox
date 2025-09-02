@@ -1,6 +1,6 @@
 # Git Guidelines
 
-This document describes the Git branching strategy and contribution workflow for this project, following Jira User Story-based development.
+This document describes the Git branching strategy and contribution workflow for this project, following Jira Epic-based development.
 
 ## Branching Strategy
 
@@ -9,14 +9,14 @@ This document describes the Git branching strategy and contribution workflow for
     - Do not commit directly to `main`
 
 - **ISSUEID-ISSUETITLE-**  
-    - Create a new branch for each Jira **User Story**
+    - Create a new branch for each Jira **Epic**
     - Branches should be created via Jira's **"Create branch"** button  
     - Jira will automatically suggest a branch name in the format: **ISSUEID-ISSUETITLE-**
     - Use the suggested branch name exactly as it appears. Do not rename or modify it
 
 ## Development Workflow
 
-1. In Jira, go to the User Story and click **"Create branch"**  
+1. In Jira, go to the Epic and click **"Create branch"**  
    - Select the target GitHub repository  
    - Ensure the base branch is set to `main`  
    - Use the suggested branch name
@@ -49,7 +49,7 @@ This document describes the Git branching strategy and contribution workflow for
     git commit -m "ISSUEID ISSUETITLE"
 ```
 
-6.	Push your branch to GitHub
+6.	Upon completing all the Sub-task related to the Epic, push your branch to GitHub
 
 ```bash
     git push origin branch-name

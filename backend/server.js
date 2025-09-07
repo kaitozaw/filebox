@@ -13,10 +13,10 @@ connectDB();
 const container = createContainer();
 const { controllers } = container;
 
-const buildAuthRoutes = require('./routes/AuthRoutes');
-const buildFolderRoutes = require('./routes/FolderRoutes');
-const buildFileRoutes = require('./routes/FileRoutes');
-const buildPublicRoutes = require('./routes/PublicRoutes');
+const buildAuthRoutes = require('./routes/authRoutes');
+const buildFolderRoutes = require('./routes/folderRoutes');
+const buildFileRoutes = require('./routes/fileRoutes');
+const buildPublicRoutes = require('./routes/publicRoutes');
 
 app.use('/api/auth', buildAuthRoutes({ authController: controllers.authController }));
 app.use('/api/folders', buildFolderRoutes({ folderController: controllers.folderController }));

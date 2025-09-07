@@ -1,7 +1,9 @@
 const express = require('express');
-const { accessPublicFile } = require('../controllers/fileController');
-const router = express.Router();
 
-router.get('/:publicId', accessPublicFile);
+module.exports = ({ fileController }) => {
+    const router = express.Router();
 
-module.exports = router;
+    router.get('/:publicId', fileController.accessPublicFile.bind(fileController));
+
+    return router;
+};

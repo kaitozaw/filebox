@@ -1,25 +1,27 @@
-const express = require('express');
 const dotenv = require('dotenv');
-const cors = require('cors');
-const connectDB = require('./config/db');
-
 dotenv.config();
 
+const express = require('express');
+const cors = require('cors');
+const connectDB = require('./config/db');
+const { createContainer } = require('./utils/factory');
+
 const app = express();
-
-app.use(cors());
 app.use(express.json());
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/files', require('./routes/fileRoutes'));
-app.use('/api/folders', require('./routes/folderRoutes'));
-app.use('/api/public', require('./routes/publicRoutes'));
+app.use(cors());
+connectDB();
+const container = createContainer();
+const { controllers } = container;
 
-// Export the app object for testing
-if (require.main === module) {
-    connectDB();
-    // If the file is run directly, start the server
-    const PORT = process.env.PORT || 5001;
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-  }
+const buildAuthRoutes = require('./routes/AuthRoutes');
+const buildFolderRoutes = require('./routes/FolderRoutes');
+const buildFileRoutes = require('./routes/FileRoutes');
+const buildPublicRoutes = require('./routes/PublicRoutes');
 
-module.exports = app
+app.use('/api/auth', buildAuthRoutes({ authController: controllers.authController }));
+app.use('/api/folders', buildFolderRoutes({ folderController: controllers.folderController }));
+app.use('/api/files', buildFileRoutes({ fileController: controllers.fileController }));
+app.use('/api/public', buildPublicRoutes({ fileController: controllers.fileController }));
+
+const PORT = process.env.PORT || 5001;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

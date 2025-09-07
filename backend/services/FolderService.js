@@ -1,5 +1,5 @@
 const Folder = require('../models/Folder');
-const { ValidationError, UnauthorizedError, ForbiddenError, NotFoundError } = require('../utils/errors');
+const { ValidationError, ForbiddenError, NotFoundError } = require('../utils/errors');
 
 class FolderService {
     async list(userId) {

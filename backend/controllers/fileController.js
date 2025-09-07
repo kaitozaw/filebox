@@ -1,7 +1,4 @@
 const BaseController = require('./BaseController');
-const fs = require('fs');
-const path = require('path');
-const multer = require('multer');
 
 class FileController extends BaseController {
     constructor({ fileService }) {
@@ -15,8 +12,13 @@ class FileController extends BaseController {
     }
 
     async downloadFile(req, res) {
-        try { return await this.fileService.download(req.user.id, req.params.fileId, res); }
-        catch (err) { return this.handleError(res, err); }
+        try {
+            const { stream, headers } = await this.fileService.download(req.user.id, req.params.fileId);
+            Object.entries(headers).forEach(([k, v]) => v !== undefined && res.setHeader(k, v));
+            return stream.pipe(res);
+        } catch (err) {
+            return this.handleError(res, err);
+        }
     }
 
     async uploadFile(req, res) {
@@ -40,17 +42,15 @@ class FileController extends BaseController {
     }
 
     async accessPublicFile(req, res) {
-        try { return await this.fileService.accessPublic(req.params.publicId, res); }
-        catch (err) { return this.handleError(res, err); }
+        try {
+            const { stream, headers } = await this.fileService.accessPublic(req.params.publicId);
+            Object.entries(headers).forEach(([k, v]) => v !== undefined && res.setHeader(k, v));
+            return stream.pipe(res);
+        } catch (err) {
+            if (err.status === 410) return res.status(410).json({ message: err.message });
+            return this.handleError(res, err);
+        }
     }
 }
 
-const UPLOAD_DIR = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(UPLOAD_DIR)) { fs.mkdirSync(UPLOAD_DIR, { recursive: true }); }
-const storage = multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
-    filename: (_req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
-});
-const upload = multer({ storage });
-
-module.exports = { FileController, upload };
+module.exports = { FileController };

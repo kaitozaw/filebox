@@ -1,9 +1,10 @@
 const express = require('express');
 const { protect } = require('../middleware/authMiddleware');
-const { upload } = require('../controllers/FileController');
+const { createUploadMiddleware } = require('../utils/uploadFactory');
 
 module.exports = ({ fileController }) => {
     const router = express.Router();
+    const upload = createUploadMiddleware();
 
     router.get('/in-folder/:folderId', protect, fileController.listFilesInFolder.bind(fileController));
     router.get('/:fileId/download', protect, fileController.downloadFile.bind(fileController));

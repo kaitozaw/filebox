@@ -1,5 +1,5 @@
 const User = require('../models/User');
-const { ValidationError, UnauthorizedError, ForbiddenError, NotFoundError } = require('../utils/errors');
+const { ValidationError, UnauthorizedError, NotFoundError } = require('../utils/errors');
 
 class UserService {
     constructor({ hasher, tokenUtil }) {

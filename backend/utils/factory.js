@@ -3,10 +3,12 @@ const path = require('path');
 const { AuthController } = require('../controllers/AuthController');
 const { FolderController } = require('../controllers/FolderController');
 const { FileController } = require('../controllers/FileController');
+const { ZipController } = require('../controllers/ZipController');
 
 const UserService = require('../services/UserService');
 const FolderService = require('../services/FolderService');
 const FileService = require('../services/FileService');
+const ZipService = require('../services/ZipService');
 
 const LocalStorage = require('../services/storage/LocalStorage');
 
@@ -25,10 +27,12 @@ function createContainer() {
     const authController = new AuthController({ userService });
     const folderController = new FolderController({ folderService });
     const fileController = new FileController({ fileService });
+    const zipService = new ZipService({ fileService, folderService });
+    const zipController = new ZipController({ zipService });
 
     return {
-        services: { userService, folderService, fileService },
-        controllers: { authController, folderController, fileController },
+        services: { userService, folderService, fileService, zipService },
+        controllers: { authController, folderController, fileController, zipController },
     };
 }
 

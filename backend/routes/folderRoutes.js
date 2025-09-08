@@ -8,6 +8,7 @@ module.exports = ({ folderController }) => {
     router.post('/', protect, folderController.createFolder.bind(folderController));
     router.put('/:id', protect, folderController.updateFolder.bind(folderController));
     router.delete('/:id', protect, folderController.deleteFolder.bind(folderController));
+    router.get('/:id/zip', protect, folderController.downloadFolderZip.bind(folderController));
 
     return router;
 };

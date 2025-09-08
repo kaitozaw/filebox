@@ -2,11 +2,15 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../axiosConfig';
+import DownloadZipModal from '../components/DownloadZipModal';
 
 const FileList = ({ folderId }) => {
     const { user } = useAuth();
     const { folderId: folderIdParam } = useParams();
     const effectiveFolderId = folderId ?? folderIdParam;
+
+    const [showDownloadModal, setShowDownloadModal] = useState(false);
+
     const [files, setFiles] = useState([]);
     const [fileToUpload, setFileToUpload] = useState(null);
     const [editingFileId, setEditingFileId] = useState(null);
@@ -117,12 +121,23 @@ const FileList = ({ folderId }) => {
     };
 
     return (
-        <div className="max-w-lg mx-auto mt-20 px-6">
-            <form onSubmit={handleUpload} className="bg-white rounded-2xl shadow-lg p-6 space-y-4">
-                <h1 className="text-3xl font-extrabold tracking-wide text-slate-900 text-center mb-2">Files in Folder</h1>
-                <input
-                    type="file"
-                    onChange={(e) => setFileToUpload(e.target.files[0])}
+            <div className="max-w-lg mx-auto mt-20 px-6">
+                {files.length > 0 && (
+                <div className="mt-4 flex justify-end">
+                    <button
+                        onClick={() => setShowZipModal(true)}
+                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition duration-300"
+                    >
+                        Download ZIP
+                    </button>
+            </div>
+        )}
+        
+        <form onSubmit={handleUpload} className="bg-white rounded-2xl shadow-lg p-6 space-y-4">
+            <h1 className="text-3xl font-extrabold tracking-wide text-slate-900 text-center mb-2">Files in Folder</h1>
+            <input
+                type="file"
+                onChange={(e) => setFileToUpload(e.target.files[0])}
                     className="w-full rounded-xl border border-slate-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-300"
                 />
                 <button type="submit" className="w-full bg-pink-500 text-white px-5 py-2.5 rounded-full hover:bg-pink-700 transition duration-300">
@@ -187,7 +202,14 @@ const FileList = ({ folderId }) => {
                     ))}
                 </ul>
             )}
+            {showDownloadModal && (
+            <DownloadZipModal
+                files={files}
+                onClose={() => setShowDownloadModal(false)}
+            />
+            )}
         </div>
+        
     );
 };
 

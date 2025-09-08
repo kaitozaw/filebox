@@ -23,11 +23,11 @@ function createContainer() {
     const userService = new UserService({ hasher, tokenUtil });
     const folderService = new FolderService();
     const fileService = new FileService({ storage });
+    const zipService = new ZipService({ fileService, folderService });
 
     const authController = new AuthController({ userService });
     const folderController = new FolderController({ folderService });
-    const fileController = new FileController({ fileService });
-    const zipService = new ZipService({ fileService, folderService });
+    const fileController = new FileController({ fileService });    
     const zipController = new ZipController({ zipService });
 
     return {

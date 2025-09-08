@@ -1,72 +1,62 @@
-// /backend/services/ZipService.js
 const archiver = require('archiver');
-const { Readable } = require('stream');
-const mongoose = require('mongoose');
+const { PassThrough } = require('stream');
 
 class ZipService {
     constructor({ fileService, folderService }) {
         this.fileService = fileService;
         this.folderService = folderService;
-        this.MAX_FILES = 5;
     }
 
-    /**
-     * Facade method: wraps file lookup, permission checks, and zip streaming
-     */
-    async zipFolder({ userId, folderId }) {
-        // --- Proxy Guard: check folder ownership ---
+    async zipFolder({ userId, folderId, fileIds }) {
+        // Verify folder ownership
         const folder = await this.folderService.getFolderById(folderId);
-        if (!folder) {
-            const err = new Error('Folder not found');
-            err.statusCode = 404;
-            throw err;
-        }
-        if (String(folder.owner) !== String(userId)) {
-            const err = new Error('Permission: You do not have ownership of these files');
-            err.statusCode = 403;
+        if (!folder || folder.owner.toString() !== userId) {
+            const err = new Error('Permission: You do not have ownership of these files.');
+            err.name = 'PermissionError';
             throw err;
         }
 
-        // --- Fetch files from folder (MongoDB) ---
-        const files = await this.fileService.getFilesByFolder(folderId);
+        // Get files inside the folder
+        const files = await this.fileService.getFilesByFolderId(folderId);
 
-        if (!files || files.length === 0) {
-            const err = new Error('No files found in this folder');
-            err.statusCode = 404;
+        // If user selected specific files, filter them
+        let selectedFiles = files;
+        if (fileIds.length > 0) {
+            selectedFiles = files.filter(f => fileIds.includes(f._id.toString()));
+        }
+
+        // Enforce max file limit (5 files)
+        if (selectedFiles.length > 5) {
+            const err = new Error('Validation: Maximum number of files to zip is 5.');
+            err.name = 'ValidationError';
             throw err;
         }
 
-        // --- Proxy Guard: enforce max file count ---
-        if (files.length > this.MAX_FILES) {
-            const err = new Error(`Maximum number of files to zip is ${this.MAX_FILES}`);
-            err.statusCode = 400;
-            throw err;
-        }
-
-        // --- Create archive stream ---
+        // Setup ZIP stream
+        const passthrough = new PassThrough();
         const archive = archiver('zip', { zlib: { level: 9 } });
 
-        // Add each file stream to archive
-        for (const file of files) {
-            // Assume fileService.getFileStream(file) returns a Readable stream (e.g., from GridFS or local storage)
-            const fileStream = await this.fileService.getFileStream(file);
-            if (!(fileStream instanceof Readable)) {
-                const err = new Error(`Failed to read file: ${file.originalName}`);
-                err.statusCode = 500;
-                throw err;
-            }
-            archive.append(fileStream, { name: file.originalName });
+        archive.on('error', (err) => {
+            throw err;
+        });
+
+        archive.pipe(passthrough);
+
+        // Append files to archive
+        for (const file of selectedFiles) {
+            const stream = await this.fileService.getFileStream(file);
+            archive.append(stream, { name: file.name });
         }
 
         archive.finalize();
 
-        const filename = `folder-${folderId}.zip`;
-        const headers = {
-            'Content-Type': 'application/zip',
-            'Content-Disposition': `attachment; filename="${filename}"`,
+        return {
+            stream: passthrough,
+            filename: `${folder.name}.zip`,
+            headers: {
+                'Content-Type': 'application/zip',
+            },
         };
-
-        return { stream: archive, filename, headers };
     }
 }
 

@@ -19,7 +19,12 @@ const buildFileRoutes = require('./routes/fileRoutes');
 const buildPublicRoutes = require('./routes/publicRoutes');
 
 app.use('/api/auth', buildAuthRoutes({ authController: controllers.authController }));
-app.use('/api/folders', buildFolderRoutes({ folderController: controllers.folderController }));
+// Pass both folderController and zipController to folder routes
+app.use('/api/folders', buildFolderRoutes({ 
+    folderController: controllers.folderController, 
+    zipController: controllers.zipController 
+    })
+);
 app.use('/api/files', buildFileRoutes({ fileController: controllers.fileController }));
 app.use('/api/public', buildPublicRoutes({ fileController: controllers.fileController }));
 

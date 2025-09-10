@@ -8,8 +8,6 @@ const FileList = ({ folderId }) => {
     const { user } = useAuth();
     const { folderId: folderIdParam } = useParams();
     const effectiveFolderId = folderId ?? folderIdParam;
-
-    //const [showDownloadModal, setShowDownloadModal] = useState(false);
     const [showZipModal, setShowZipModal] = useState(false);
 
 
@@ -123,17 +121,8 @@ const FileList = ({ folderId }) => {
     };
 
     return (
-            <div className="max-w-lg mx-auto mt-20 px-6">
-                {files.length > 0 && (
-                <div className="mt-4 flex justify-end">
-                    <button
-                        onClick={() => setShowZipModal(true)}
-                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition duration-300"
-                    >
-                        Download ZIP
-                    </button>
-            </div>
-        )}
+        <div className="max-w-lg mx-auto mt-20 px-6">
+                
         
         <form onSubmit={handleUpload} className="bg-white rounded-2xl shadow-lg p-6 space-y-4">
             <h1 className="text-3xl font-extrabold tracking-wide text-slate-900 text-center mb-2">Files in Folder</h1>
@@ -145,6 +134,18 @@ const FileList = ({ folderId }) => {
                 <button type="submit" className="w-full bg-pink-500 text-white px-5 py-2.5 rounded-full hover:bg-pink-700 transition duration-300">
                     {loading ? 'Uploading...' : 'Upload File'}
                 </button>
+                {files.length > 0 && (
+                <div className="mt-4 flex justify-end">
+                    <button
+                        onClick={() => setShowZipModal(true)}
+                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition duration-300"
+                    >
+                        Download ZIP
+                    </button>
+            </div>
+        )}
+                
+                
             </form>
 
             {files.length > 0 && (

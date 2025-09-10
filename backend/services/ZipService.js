@@ -10,14 +10,14 @@ class ZipService {
     async zipFolder({ userId, folderId, fileIds }) {
         // Verify folder ownership
         const folder = await this.folderService.getFolderById(folderId);
-        if (!folder || folder.owner.toString() !== userId) {
+        if (!folder || folder.user.toString() !== userId) {
             const err = new Error('Permission: You do not have ownership of these files.');
             err.name = 'PermissionError';
             throw err;
         }
 
         // Get files inside the folder
-        const files = await this.fileService.getFilesByFolderId(folderId);
+        const files = await this.fileService.getFilesByFolder(userId, folderId);
 
         // If user selected specific files, filter them
         let selectedFiles = files;

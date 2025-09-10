@@ -25,6 +25,7 @@ class FolderController extends BaseController {
         }
     }
 
+
     async createFolder(req, res) {
         try { return this.created(res, await this.folderService.create(req.user.id, req.body)); }
         catch (err) { return this.handleError(res, err); }

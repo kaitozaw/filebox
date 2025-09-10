@@ -37,7 +37,7 @@ class ZipService {
         const archive = archiver('zip', { zlib: { level: 9 } });
 
         archive.on('error', (err) => {
-            throw err;
+            passthrough.emit('error', err); // propagate properly
         });
 
         archive.pipe(passthrough);

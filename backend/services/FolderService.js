@@ -30,6 +30,12 @@ class FolderService {
         await folder.deleteOne();
         return { message: 'Folder deleted successfully' };
     }
+    async getFolderById(userId, folderId) {
+        const folder = await Folder.findById(folderId);
+        if (!folder) throw new NotFoundError('Folder not found');
+        if (folder.user.toString() !== userId) throw new ForbiddenError('Not authorized to access this folder');
+        return folder;
+    }
 }
 
 module.exports = FolderService;

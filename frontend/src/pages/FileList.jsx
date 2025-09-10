@@ -9,7 +9,9 @@ const FileList = ({ folderId }) => {
     const { folderId: folderIdParam } = useParams();
     const effectiveFolderId = folderId ?? folderIdParam;
 
-    const [showDownloadModal, setShowDownloadModal] = useState(false);
+    //const [showDownloadModal, setShowDownloadModal] = useState(false);
+    const [showZipModal, setShowZipModal] = useState(false);
+
 
     const [files, setFiles] = useState([]);
     const [fileToUpload, setFileToUpload] = useState(null);
@@ -202,10 +204,10 @@ const FileList = ({ folderId }) => {
                     ))}
                 </ul>
             )}
-            {showDownloadModal && (
+            {showZipModal && (
             <DownloadZipModal
-                files={files}
-                onClose={() => setShowDownloadModal(false)}
+                folderId={effectiveFolderId}
+                onClose={() => setShowZipModal(false)}
             />
             )}
         </div>

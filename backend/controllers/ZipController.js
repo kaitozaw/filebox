@@ -19,7 +19,17 @@ class ZipController {
 
             res.setHeader('Content-Type', headers['Content-Type']);
             res.setHeader('Content-Disposition', contentDisposition(filename));
+            // Handle stream errors so Express doesn't hang
+            stream.on('error', (err) => {
+                console.error("Stream error:", err);
+                if (!res.headersSent) {
+                    return res.status(500).json({ error: true, message: "ZIP stream failed" });
+                }
+                res.destroy(err);
+            });
+
             stream.pipe(res);
+            
         } catch (err) {
             console.error('ZipController Error:', err);
 

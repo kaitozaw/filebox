@@ -98,6 +98,12 @@ class FileService {
             throw err;
         }
         const { stream } = this.storage.stream(file.filePath);
+        const markOnce = (() => { let done = false; return () => { if (done) return; done = true; this.touchAccess(file).catch(err => console.warn('[Public Access] touchAccess failed', err)); }; })();
+        if (typeof stream?.once === 'function') {
+            stream.once('data', markOnce);
+        } else if (typeof stream?.on === 'function') {
+            stream.one('data', markOnce);
+        }
         const headers = this.buildDownloadHeaders(file);
         return { stream, headers };
     }

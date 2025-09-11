@@ -94,6 +94,14 @@ class FileService {
         const headers = this.buildDownloadHeaders(file);
         return { stream, headers };
     }
+
+    async touchAccess(file) {
+        if (!file || !file._id) return;
+        try {
+            await File.updateOne( { _id:file._id }, { $set: { lastAccessedAt: new Date()} });
+        } catch (err) {console.warn('[FileService.touchAccess] failed to update lastAccessedAt', err);
+        }
+    }
 }
 
 module.exports = FileService;

@@ -72,12 +72,16 @@ export default function DownloadZipModal({ folderId, onClose }) {
                 link.remove();
             }
 
-            // ✅ Show success message
+            // Show success message
             setSuccess('Download successful!');
         } catch (err) {
             console.error('ZIP download error:', err.response || err);
-            setError(err.response?.data?.message || 'Failed to download ZIP');
-        } finally {
+            if (err.response?.status === 429) {
+                setError(err.response.data.message || 'Quota limit reached. Please wait before retrying.');
+            } else {
+                setError(err.response?.data?.message || 'Failed to download ZIP123');
+            }
+            } finally {
             setLoading(false);
         }
     };

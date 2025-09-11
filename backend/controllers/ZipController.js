@@ -39,6 +39,12 @@ class ZipController {
             if (err.name === 'ValidationError' || err.name === 'QuotaError') {
                 return res.status(400).json({ error: true, message: err.message });
             }
+            if (err.name === 'QuotaError') {
+                return res.status(429).json({
+                    error: true,
+                    message: 'You have reached your download quota. Please wait before trying again.'
+                });
+                }
 
             res.status(500).json({ error: true, message: 'Internal Server Error' });
         }

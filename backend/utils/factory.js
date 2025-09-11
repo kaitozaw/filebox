@@ -9,7 +9,7 @@ const UserService = require('../services/UserService');
 const FolderService = require('../services/FolderService');
 const FileService = require('../services/FileService');
 const ZipService = require('../services/ZipService');
-
+const ZipAccessProxy = require('../services/ZipAccessProxy');
 const LocalStorage = require('../services/storage/LocalStorage');
 
 const hasher = require('./hasher');
@@ -24,14 +24,15 @@ function createContainer() {
     const folderService = new FolderService();
     const fileService = new FileService({ storage });
     const zipService = new ZipService({ fileService, folderService });
+    const zipAccessProxy = new ZipAccessProxy({ zipService, folderService });
 
     const authController = new AuthController({ userService });
     const folderController = new FolderController({ folderService });
     const fileController = new FileController({ fileService });    
-    const zipController = new ZipController({ zipService });
+    const zipController = new ZipController({ zipAccessProxy });
 
     return {
-        services: { userService, folderService, fileService, zipService },
+        services: { userService, folderService, fileService, zipService, zipAccessProxy },
         controllers: { authController, folderController, fileController, zipController },
     };
 }

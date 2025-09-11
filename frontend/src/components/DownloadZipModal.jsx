@@ -7,6 +7,7 @@ export default function DownloadZipModal({ folderId, onClose }) {
     const [files, setFiles] = useState([]);
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');   // ✅ new state
     const [loading, setLoading] = useState(false);
 
     // Fetch files in folder
@@ -39,6 +40,9 @@ export default function DownloadZipModal({ folderId, onClose }) {
 
         try {
             setLoading(true);
+            setError('');
+            setSuccess('');
+
             const response = await axios.get(
                 `${process.env.REACT_APP_BASE_URL}/folders/${folderId}/zip`,
                 {
@@ -68,7 +72,8 @@ export default function DownloadZipModal({ folderId, onClose }) {
                 link.remove();
             }
 
-            onClose();
+            // ✅ Show success message
+            setSuccess('Download successful!');
         } catch (err) {
             console.error('ZIP download error:', err.response || err);
             setError(err.response?.data?.message || 'Failed to download ZIP');
@@ -83,6 +88,7 @@ export default function DownloadZipModal({ folderId, onClose }) {
                 <h2 className="text-lg font-bold mb-4">Select Files to Download</h2>
 
                 {error && <div className="text-red-600 mb-2">{error}</div>}
+                {success && <div className="text-green-600 mb-2">{success}</div>} {/* ✅ success message */}
 
                 <div className="file-list max-h-64 overflow-y-auto mb-4 border rounded p-2">
                     {files.length > 0 ? (

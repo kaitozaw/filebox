@@ -1,21 +1,13 @@
+// backend/services/ZipService.js
 const archiver = require('archiver');
 const { PassThrough } = require('stream');
 
 class ZipService {
-    constructor({ fileService, folderService }) {
+    constructor({ fileService }) {
         this.fileService = fileService;
-        this.folderService = folderService;
     }
 
     async zipFolder({ userId, folderId, fileIds }) {
-        // Verify folder ownership
-        const folder = await this.folderService.getFolderById(folderId);
-        if (!folder || folder.user.toString() !== userId) {
-            const err = new Error('Permission: You do not have ownership of these files.');
-            err.name = 'PermissionError';
-            throw err;
-        }
-
         // Get files inside the folder
         const files = await this.fileService.getFilesByFolder(userId, folderId);
 
@@ -37,12 +29,12 @@ class ZipService {
         const archive = archiver('zip', { zlib: { level: 9 } });
 
         archive.on('error', (err) => {
-            passthrough.emit('error', err); // propagate properly
+        passthrough.emit('error', err);
         });
 
         archive.pipe(passthrough);
 
-        // Append files to archive
+        // Append files
         for (const file of selectedFiles) {
             const stream = await this.fileService.getFileStream(file);
             archive.append(stream, { name: file.name });
@@ -52,10 +44,8 @@ class ZipService {
 
         return {
             stream: passthrough,
-            filename: `${folder.name}.zip`,
-            headers: {
-                'Content-Type': 'application/zip',
-            },
+            filename: `folder-${folderId}.zip`,
+            headers: { 'Content-Type': 'application/zip' },
         };
     }
 }

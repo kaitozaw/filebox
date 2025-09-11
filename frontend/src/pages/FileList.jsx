@@ -134,19 +134,21 @@ const FileList = ({ folderId }) => {
                 <button type="submit" className="w-full bg-pink-500 text-white px-5 py-2.5 rounded-full hover:bg-pink-700 transition duration-300">
                     {loading ? 'Uploading...' : 'Upload File'}
                 </button>
-                {files.length > 0 && (
+                
+                
+                
+            </form>
+
+            {files.length > 0 && (
                 <div className="mt-4 flex justify-end">
                     <button
                         onClick={() => setShowZipModal(true)}
-                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition duration-300"
+                        className="px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-400 transition duration-300"
                     >
                         Download ZIP
                     </button>
             </div>
         )}
-                
-                
-            </form>
 
             {files.length > 0 && (
                 <ul className="mt-6 bg-white rounded-2xl shadow-lg p-6 divide-y divide-slate-200">
@@ -211,6 +213,17 @@ const FileList = ({ folderId }) => {
                 onClose={() => setShowZipModal(false)}
             />
             )}
+            {files.length > 0 && (
+                <div className="mt-4 flex justify-end">
+                    <button
+                        onClick={() => setShowZipModal(true)}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-400 transition duration-300"
+                    >
+                        Download ZIP
+                    </button>
+            </div>
+        )}
+
         </div>
         
     );

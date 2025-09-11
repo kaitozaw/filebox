@@ -8,12 +8,9 @@ module.exports = ({ folderController, zipController }) => {
     router.post('/', protect, folderController.createFolder.bind(folderController));
     router.put('/:id', protect, folderController.updateFolder.bind(folderController));
     router.delete('/:id', protect, folderController.deleteFolder.bind(folderController));
+    router.get('/:id/zip', protect, zipController.downloadFolderZip.bind(zipController)); // New route for zipping folder
+    router.get('/:id', protect, folderController.getFolderById.bind(folderController)); // Get folder by ID
     
-     // ZIP route: use zipController
-    router.get('/:id/zip', protect, zipController.downloadFolderZip.bind(zipController));
-    router.get('/:id', protect, folderController.getFolderById.bind(folderController));
-
-
 
     return router;
 };

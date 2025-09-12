@@ -61,7 +61,7 @@ export default function Recents() {
   const fmtDate = (d) => new Date(d).toLocaleDateString();
 
   return (
-    <div className="max-w-3xl mx-auto mt-20 px-6">
+    <div className="max-w-5xl mx-auto mt-20 px-6">
       <h1 className="text-4xl font-extrabold tracking-wide text-slate-900 mb-8">Recents</h1>
 
       {loading && <div className="text-center">Loading...</div>}

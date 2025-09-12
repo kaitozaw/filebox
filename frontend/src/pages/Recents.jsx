@@ -58,7 +58,8 @@ export default function Recents() {
     } catch { alert('Failed to move to trash'); }
   };
 
-  const fmtDate = (d) => new Date(d).toLocaleDateString();
+  const fmtDate = (d) =>
+    d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-';
 
   return (
     <div className="max-w-5xl mx-auto mt-20 px-6">

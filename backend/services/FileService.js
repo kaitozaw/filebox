@@ -34,8 +34,7 @@ class FileService {
         const { stream } = this.storage.stream(file.filePath);
         let marked = false;
         const markOnce = () => { if (marked) return; marked = true; this.touchAccess(file).catch(err => console.warn('[Download] touchAccess failed', err));};
-        if (typeof stream.on === 'function') {
-            stream.on('data', markOnce);
+        if (typeof stream?.on === 'function') {
             stream.on('end', markOnce);
         }
         const headers = this.buildDownloadHeaders(file);
@@ -97,11 +96,10 @@ class FileService {
             throw err;
         }
         const { stream } = this.storage.stream(file.filePath);
-        const markOnce = (() => { let done = false; return () => { if (done) return; done = true; this.touchAccess(file).catch(err => console.warn('[Public Access] touchAccess failed', err)); }; })();
-        if (typeof stream?.once === 'function') {
-            stream.once('data', markOnce);
-        } else if (typeof stream?.on === 'function') {
-            stream.one('data', markOnce);
+        let marked = false;
+        const markOnce = () => { if (marked) return; marked = true; this.touchAccess(file).catch(err => console.warn('[Public Access] touchAccess failed', err)); };
+        if (typeof stream?.on === 'function') {
+            stream.on('end',  markOnce);
         }
         const headers = this.buildDownloadHeaders(file);
         return { stream, headers };

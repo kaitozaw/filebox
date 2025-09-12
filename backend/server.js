@@ -23,7 +23,7 @@ app.use('/api/auth', buildAuthRoutes({ authController: controllers.authControlle
 app.use('/api/folders', buildFolderRoutes({ folderController: controllers.folderController }));
 app.use('/api/files', buildFileRoutes({ fileController: controllers.fileController }));
 app.use('/api/public', buildPublicRoutes({ fileController: controllers.fileController }));
-app.use('/api', buildRecentRoutes({ recentController: controllers.recentController }));
+app.use('/api/recent', buildRecentRoutes({ recentController: controllers.recentController }));
 
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

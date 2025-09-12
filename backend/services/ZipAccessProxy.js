@@ -16,11 +16,16 @@ class ZipAccessProxy {
         }
 
         // 2. Quota check
-        if (await this.quotaService.isOverQuota(userId)) {
-        const err = new Error('Quota exceeded: Try again later.');
+        const quota = await this.quotaService.checkQuota(userId);
+        if (quota.overQuota) {
+        const err = new Error(
+            `You have reached your quota: ${quota.limit} downloads every ${quota.windowMinutes} minute(s). You already used ${quota.count}.`
+        );
         err.name = 'QuotaError';
+        err.details = quota; // pass structured data
         throw err;
         }
+
 
         // 3. Fetch files using FileService
         let files = await this.fileService.getFilesByFolder(userId, folderId);

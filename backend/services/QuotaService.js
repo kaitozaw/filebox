@@ -1,19 +1,25 @@
-// backend/services/QuotaService.js
 class QuotaService {
     constructor({ zipLogModel }) {
-        this.zipLogModel = zipLogModel; // optional, use DB to persist usage
+        this.zipLogModel = zipLogModel;
     }
 
-    async isOverQuota(userId) {
-        const minutes = 1; // past 1 minute
-        const oneMinuteAgo = new Date(Date.now() - minutes * 60 * 1000);
+    async checkQuota(userId) {
+        const windowMinutes = 1; // configurable (e.g., via env var)
+        const limit = 3;         // configurable (e.g., via env var)
+        const cutoff = new Date(Date.now() - windowMinutes * 60 * 1000);
 
         const count = await this.zipLogModel.countDocuments({
         user: userId,
-        createdAt: { $gte: oneMinuteAgo }
+        createdAt: { $gte: cutoff }
         });
 
-        return count >= 3; // over quota if 3 or more in past minute
+        return {
+        overQuota: count >= limit,
+        count,
+        limit,
+        windowMinutes,
+        retryAfterSeconds: windowMinutes * 60 // helpful for UI countdown
+        };
     }
 
     async logZipDownload(userId, folderId, fileCount) {

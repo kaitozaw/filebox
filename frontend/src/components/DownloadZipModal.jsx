@@ -74,16 +74,37 @@ export default function DownloadZipModal({ folderId, onClose }) {
 
             // Show success message
             setSuccess('Download successful!');
-        } catch (err) {
+            } catch (err) {
             console.error('ZIP download error:', err.response || err);
+
             if (err.response?.status === 429) {
-                setError(err.response.data.message || 'Quota limit reached. Please wait before retrying.');
+                try {
+                // Convert Blob → JSON
+                const text = await err.response.data.text();
+                const json = JSON.parse(text);
+                console.log("Quota error parsed JSON:", json);
+
+                const details = json.details;
+                if (details) {
+                    setError(
+                    `Quota reached: You can only download ${details.limit} ZIPs every ${details.windowMinutes} minute(s). ` +
+                    `You already downloaded ${details.count}. Please try again in ~${details.retryAfterSeconds} seconds.`
+                    );
+                } else {
+                    setError(json.message || 'Quota limit reached.');
+                }
+                } catch (parseErr) {
+                console.error("Failed to parse quota error:", parseErr);
+                setError('Quota limit reached. Please wait before retrying.');
+                }
             } else {
-                setError(err.response?.data?.message || 'Failed to download ZIP123');
+                setError(err.response?.data?.message || 'Failed to download ZIP');
             }
             } finally {
-            setLoading(false);
+                setLoading(false); // this resets loading state
+                //onClose();   Activate this line if you want to close modal after zip download
         }
+
     };
 
     return (
@@ -92,7 +113,7 @@ export default function DownloadZipModal({ folderId, onClose }) {
                 <h2 className="text-lg font-bold mb-4">Select Files to Download</h2>
 
                 {error && <div className="text-red-600 mb-2">{error}</div>}
-                {success && <div className="text-green-600 mb-2">{success}</div>} {/* ✅ success message */}
+                {success && <div className="text-green-600 mb-2">{success}</div>} {/* success message */}
 
                 <div className="file-list max-h-64 overflow-y-auto mb-4 border rounded p-2">
                     {files.length > 0 ? (

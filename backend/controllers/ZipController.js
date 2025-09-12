@@ -36,15 +36,17 @@ class ZipController {
             if (err.name === 'PermissionError') {
                 return res.status(403).json({ error: true, message: err.message });
             }
-            if (err.name === 'ValidationError' || err.name === 'QuotaError') {
+            if (err.name === 'ValidationError') {
                 return res.status(400).json({ error: true, message: err.message });
             }
             if (err.name === 'QuotaError') {
                 return res.status(429).json({
                     error: true,
-                    message: 'You have reached your download quota. Please wait before trying again.'
+                    message: err.message,
+                    details: err.details // send structured data
                 });
-                }
+    }
+
 
             res.status(500).json({ error: true, message: 'Internal Server Error' });
         }

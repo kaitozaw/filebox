@@ -33,11 +33,10 @@ class FileService {
         if (file.user.toString() !== userId) throw new ForbiddenError('Not authorized to download this file');
         const { stream } = this.storage.stream(file.filePath);
         let marked = false;
-        const markOnce = () => { if (marked) return; marked = true; this.touchAccess(file) .catch(err => console.warn('[Download] touchAccess failed', err));};
+        const markOnce = () => { if (marked) return; marked = true; this.touchAccess(file).catch(err => console.warn('[Download] touchAccess failed', err));};
         if (typeof stream.on === 'function') {
             stream.on('data', markOnce);
             stream.on('end', markOnce);
-            stream.on('error', markOnce);
         }
         const headers = this.buildDownloadHeaders(file);
         return { stream, headers };

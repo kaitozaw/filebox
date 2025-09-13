@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import axiosInstance from '../axiosConfig';
 import { todayFilter, last7Filter, allFilter } from './RecentsFilterPrototype';
 
@@ -63,6 +63,12 @@ export default function Recents() {
   const fmtDate = (d) =>
     d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-';
 
+  const filteredFiles = useMemo(() => {
+  return files
+    .filter(f => activeFilter.filtering(f))
+    .sort((a, b) => new Date(b.lastAccessedAt) - new Date(a.lastAccessedAt));
+}, [files, activeFilter]);
+
   return (
     <div className="max-w-5xl mx-auto mt-20 px-6">
       <h1 className="text-4xl font-extrabold tracking-wide text-slate-900 mb-8">Recents</h1>
@@ -86,9 +92,9 @@ export default function Recents() {
       {loading && <div className="text-center">Loading...</div>}
       {!loading && files.length === 0 && <div className="text-center">No recent files yet.</div>}
 
-      {files.length > 0 && (
+      {filteredFiles.length > 0 && (
         <ul className="bg-white rounded-2xl shadow-lg p-6 divide-y divide-slate-200">
-          {files.map(file => (
+          {filteredFiles.map(file => (
             <li key={file._id} className="py-5 flex items-center justify-between">
               <div>
                 <div className="text-lg text-slate-800">{file.name}</div>

@@ -20,9 +20,6 @@ const buildFolderRoutes = require('./routes/folderRoutes');
 const buildFileRoutes = require('./routes/fileRoutes');
 const buildPublicRoutes = require('./routes/publicRoutes');
 
-// Use container-provided buildDebugRoutes (has eventBus)
-//app.use('/api/debug', container.buildDebugRoutes());
-
 app.use('/api/auth', buildAuthRoutes({ authController: controllers.authController }));
 app.use('/api/folders', buildFolderRoutes({ 
     folderController: controllers.folderController, 

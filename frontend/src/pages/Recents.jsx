@@ -1,9 +1,11 @@
 import { useEffect, useState, useCallback } from 'react';
 import axiosInstance from '../axiosConfig';
+import { todayFilter, last7Filter, allFilter } from './RecentsFilterPrototype';
 
 export default function Recents() {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [activeFilter, setActiveFilter] = useState(allFilter);
 
   const loadRecents = useCallback(async () => {
     setLoading(true);

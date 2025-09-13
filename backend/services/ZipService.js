@@ -1,10 +1,14 @@
 // backend/services/ZipService.js
 const archiver = require('archiver');
 const { PassThrough } = require('stream');
+const EventEmitter = require('events');
 
-class ZipService {
-    constructor({ fileService }) {
+
+class ZipService extends EventEmitter {
+    constructor({ fileService, folderService }) {
+        super();
         this.fileService = fileService;
+        this.folderService = folderService;
     }
 
     async zipFolder({ folder, files }) {
@@ -22,6 +26,14 @@ class ZipService {
         }
 
         archive.finalize();
+
+        // Emit event for observers (AuditService, LoggerService, QuotaService, etc.)
+        this.emit('ZIP_CREATED', {
+        folderId: folder._id,
+        userId: folder.user,
+        fileCount: files.length,
+        timestamp: new Date(),
+        });
 
         return {
         stream: passthrough,

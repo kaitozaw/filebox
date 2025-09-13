@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../axiosConfig';
 import DownloadZipModal from '../components/DownloadZipModal';
 
+
 const FileList = ({ folderId }) => {
     const { user } = useAuth();
     const { folderId: folderIdParam } = useParams();
@@ -16,6 +17,7 @@ const FileList = ({ folderId }) => {
     const [editingFileId, setEditingFileId] = useState(null);
     const [editedFileName, setEditedFileName] = useState('');
     const [loading, setLoading] = useState(false);
+
 
     const loadFiles = useCallback(async () => {
         if (!effectiveFolderId) return;
@@ -200,6 +202,7 @@ const FileList = ({ folderId }) => {
                 onClose={() => setShowZipModal(false)}
             />
             )}
+            
             {files.length > 0 && (
                 <div className="mt-4 flex justify-end">
                     <button

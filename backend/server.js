@@ -10,21 +10,24 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 connectDB();
+
 const container = createContainer();
 const { controllers } = container;
 
+// Routes
 const buildAuthRoutes = require('./routes/authRoutes');
 const buildFolderRoutes = require('./routes/folderRoutes');
 const buildFileRoutes = require('./routes/fileRoutes');
 const buildPublicRoutes = require('./routes/publicRoutes');
 
+// Use container-provided buildDebugRoutes (has eventBus)
+//app.use('/api/debug', container.buildDebugRoutes());
+
 app.use('/api/auth', buildAuthRoutes({ authController: controllers.authController }));
-// Pass both folderController and zipController to folder routes
 app.use('/api/folders', buildFolderRoutes({ 
     folderController: controllers.folderController, 
     zipController: controllers.zipController 
-    })
-);
+}));
 app.use('/api/files', buildFileRoutes({ fileController: controllers.fileController }));
 app.use('/api/public', buildPublicRoutes({ fileController: controllers.fileController }));
 

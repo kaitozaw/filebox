@@ -7,8 +7,9 @@ export default function DownloadZipModal({ folderId, onClose }) {
     const [files, setFiles] = useState([]);
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');   // ✅ new state
+    const [success, setSuccess] = useState('');   // new state
     const [loading, setLoading] = useState(false);
+    const [retryAfter, setRetryAfter] = useState(null); // countdown state
 
     // Fetch files in folder
     useEffect(() => {
@@ -27,6 +28,22 @@ export default function DownloadZipModal({ folderId, onClose }) {
         };
         fetchFiles();
     }, [folderId, user]);
+
+    // countdown effect
+    useEffect(() => {
+        if (retryAfter === null) return;
+        if (retryAfter <= 0) {
+        setRetryAfter(null);
+        setError('');
+        return;
+        }
+
+        const timer = setTimeout(() => {
+        setRetryAfter((prev) => prev - 1);
+        }, 1000);
+
+        return () => clearTimeout(timer);
+    }, [retryAfter]);
 
     const toggleFile = (fileId) => {
         setSelectedFiles(prev =>
@@ -87,9 +104,9 @@ export default function DownloadZipModal({ folderId, onClose }) {
                 const details = json.details;
                 if (details) {
                     setError(
-                    `Quota reached: You can only download ${details.limit} ZIPs every ${details.windowMinutes} minute(s). ` +
-                    `You already downloaded ${details.count}. Please try again in ~${details.retryAfterSeconds} seconds.`
+                    `Quota reached: 3 ZIPs every ${details.windowMinutes} min. You already used 3. Retry in ${details.retryAfterSeconds}s.`
                     );
+                    setRetryAfter(details.retryAfterSeconds);
                 } else {
                     setError(json.message || 'Quota limit reached.');
                 }
@@ -164,10 +181,10 @@ export default function DownloadZipModal({ folderId, onClose }) {
                     </button>
                     <button
                         onClick={downloadZip}
-                        disabled={loading}
-                        className={`px-4 py-2 rounded text-white ${loading ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'}`}
+                        disabled={loading || retryAfter !== null}
+                        className={`px-4 py-2 rounded text-white ${loading || retryAfter !== null ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'}`}
                     >
-                        {loading ? 'Downloading...' : 'Download ZIP'}
+                        {loading ? 'Downloading...': retryAfter !== null ? `Retry in ${retryAfter}s` : 'Download ZIP'}
                     </button>
                 </div>
             </div>

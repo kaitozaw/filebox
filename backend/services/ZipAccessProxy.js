@@ -19,7 +19,7 @@ class ZipAccessProxy {
         const quota = await this.quotaService.checkQuota(userId);
         if (quota.overQuota) {
         const err = new Error(
-            `You have reached your quota: ${quota.limit} downloads every ${quota.windowMinutes} minute(s). You already used ${quota.count}.`
+            `You have reached your quota: 3 downloads every ${quota.windowMinutes} minute(s). You already used 3.`
         );
         err.name = 'QuotaError';
         err.details = quota; // pass structured data

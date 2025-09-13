@@ -10,31 +10,23 @@ export class FilterPrototype {
   }
 }
 
+const isTodayLocal = (d) =>
+  new Date(d).toDateString() === new Date().toDateString();
+
+const daysAgo = (n) => new Date(Date.now() - n * 24 * 60 * 60 * 1000);
+
 const baseFilter = new FilterPrototype({
   title: 'Base',
   filtering: () => true,
 });
 
 export const todayFilter = baseFilter.clone({
-  title: 'Today',
-  filtering: (item) => {
-    if ("item.lastAccessedAt") return false;
-    const d = new Date();
-    const start = new Date(item.lastAccessedAt);
-    start.setHours(0, 0, 0, 0);
-    return d >= start;
-  },
-});
+   title: 'Today', filtering: (item) => item?.lastAccessedAt && isTodayLocal(item.lastAccessedAt),
+  });
 
 export const last7Filter = baseFilter.clone({
   title: "Last 7 Days",
-  filtering: (item) => {
-    if (!item.lastAccessedAt) return false;
-    const d = new Date(item.lastAccessedAt);
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    return d >= sevenDaysAgo;
-  },
+  filtering: (item) => item?.lastAccessedAt && new Date(item.lastAccessedAt) >= daysAgo(7),
 });
 
 export const allFilter = baseFilter.clone({

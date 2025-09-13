@@ -1,12 +1,10 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-//import React, { useState } from 'react';
 
 
 const Navbar = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
-    //const [showConsole, setShowConsole] = useState(false); // ⬅️ state toggle
 
     const handleLogout = () => {
         logout();

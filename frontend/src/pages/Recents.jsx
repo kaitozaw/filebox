@@ -67,6 +67,22 @@ export default function Recents() {
     <div className="max-w-5xl mx-auto mt-20 px-6">
       <h1 className="text-4xl font-extrabold tracking-wide text-slate-900 mb-8">Recents</h1>
 
+      <div className="flex space-x-4 mb-6">
+        {[allFilter, todayFilter, last7Filter].map(f => (
+          <button
+            key={f.title}
+            onClick={() => setActiveFilter(f)}
+            className={`px-3 py-1 rounded-full ${
+              activeFilter.title === f.title
+                ? 'bg-cyan-600 text-white'
+                : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+            }`}
+          >
+            {f.title}
+          </button>
+        ))}
+      </div>
+
       {loading && <div className="text-center">Loading...</div>}
       {!loading && files.length === 0 && <div className="text-center">No recent files yet.</div>}
 

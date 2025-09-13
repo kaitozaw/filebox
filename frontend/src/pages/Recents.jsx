@@ -27,19 +27,35 @@ export default function Recents() {
 
   const handleDownload = async (fileId, fileName) => {
     try {
-      const res = await axiosInstance.get(`/files/${fileId}/download`, { responseType: 'blob' });
-      const type = res.headers['content-type'] || 'application/octet-stream';
-      const url = URL.createObjectURL(new Blob([res.data], { type }));
-      const a = document.createElement('a');
-      a.href = url; a.download = fileName; document.body.appendChild(a); a.click(); a.remove();
-    } catch { alert('Failed to download file'); }
+      const response = await axiosInstance.get(`/files/${fileId}/download`, {
+        responseType: 'blob',
+      });
+
+      const contentType = response.headers['content-type'] || 'application/octet-stream';
+      const blob = new Blob([response.data], { type: contentType });
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      alert('Failed to download file');
+    }
   };
 
   const handleShare = async (fileId) => {
     try {
-      const res = await axiosInstance.post(`/files/${fileId}/share`, {});
-      window.prompt('Share this link:', res.data.publicUrl);
-    } catch { alert('Failed to generate share link'); }
+      const response = await axiosInstance.post(`/files/${fileId}/share`, {});
+      const url = response.data.publicUrl;
+      window.prompt('Share this link:', url);
+    } catch (error) {
+      alert('Failed to generate share link');
+    }
   };
 
   const handleRename = async (fileId, currentName) => {
@@ -52,12 +68,15 @@ export default function Recents() {
   };
 
   const handleMoveToTrash = async (fileId) => {
-    const ok = window.confirm('Move this file to Trash?');
-    if (!ok) return;
+    const confirmed = window.confirm('Are you sure you want to delete this file?');
+    if (!confirmed) return;
+
     try {
       await axiosInstance.delete(`/files/${fileId}`);
-      setFiles(prev => prev.filter(f => f._id !== fileId));
-    } catch { alert('Failed to move to trash'); }
+      setFiles((prev) => prev.filter((file) => file._id !== fileId));
+    } catch (error) {
+      alert('Failed to delete file');
+    }
   };
 
   const fmtDate = (d) =>
@@ -93,19 +112,19 @@ export default function Recents() {
       {!loading && files.length === 0 && <div className="text-center">No recent files yet.</div>}
 
       {filteredFiles.length > 0 && (
-        <ul className="bg-white rounded-2xl shadow-lg p-6 divide-y divide-slate-200">
+        <ul className="mt-6 bg-white rounded-2xl shadow-lg p-6 divide-y divide-slate-200">
           {filteredFiles.map(file => (
-            <li key={file._id} className="py-5 flex items-center justify-between">
+            <li key={file._id} className="py-3 flex justify-between items-center hover:bg-slate-50 transition duration-300 px-2 rounded-xl">
               <div>
                 <div className="text-lg text-slate-800">{file.name}</div>
                 <div className="text-sm text-slate-500">Last accessed at: {fmtDate(file.lastAccessedAt)}</div>
               </div>
               <div className="flex space-x-6">
-                <button onClick={() => handlePreview(file._id)} className="text-cyan-500 hover:underline">Preview</button>
-                <button onClick={() => handleDownload(file._id, file.name)} className="text-green-600 hover:underline">Download</button>
-                <button onClick={() => handleShare(file._id)} className="text-purple-500 hover:underline">Share</button>
-                <button onClick={() => handleRename(file._id, file.name)} className="text-indigo-600 hover:underline">Rename</button>
-                <button onClick={() => handleMoveToTrash(file._id)} className="text-pink-600 hover:underline">Move to Trash</button>
+                <button onClick={() => handlePreview(file._id)} className="text-sm text-cyan-600 hover:text-yellow-200 transition duration-300">Preview</button>
+                <button onClick={() => handleDownload(file._id, file.name)} className="text-sm text-green-600 hover:text-yellow-200 transition duration-300">Download</button>
+                <button onClick={() => handleShare(file._id)} className="text-sm text-purple-500 hover:text-yellow-200 transition duration-30">Share</button>
+                <button onClick={() => handleRename(file._id, file.name)} className="text-sm text-indigo-600 hover:text-yellow-200 transition duration-300">Rename</button>
+                <button onClick={() => handleMoveToTrash(file._id)} className="text-sm text-pink-600 hover:text-yellow-200 transition duration-300">Move to Trash</button>
               </div>
             </li>
           ))}

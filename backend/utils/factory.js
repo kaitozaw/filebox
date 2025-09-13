@@ -31,7 +31,7 @@ function createContainer() {
     const fileService = new FileService({ storage });
     const zipService = new ZipService({ fileService, folderService });
 
-    // Observer pattern: QuotaService + LoggerService both subscribe to zipService events
+    // Observer pattern: QuotaService, LoggerService and AuditService are subscribing to zipService events
     const quotaService = new QuotaService({ zipLogModel: ZipLog, zipService });
     const loggerService = new LoggerService({ zipService});
     const auditService = new AuditService({ zipService, auditLogModel: AuditLog });

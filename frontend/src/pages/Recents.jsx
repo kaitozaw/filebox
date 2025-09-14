@@ -83,10 +83,9 @@ export default function Recents() {
     d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-';
 
   const filteredFiles = useMemo(() => {
-  return files
-    .filter(f => activeFilter.filtering(f))
-    .sort((a, b) => new Date(b.lastAccessedAt) - new Date(a.lastAccessedAt));
-}, [files, activeFilter]);
+    return files
+      .filter(f => activeFilter.filtering(f))
+  }, [files, activeFilter]);
 
   return (
     <div className="max-w-5xl mx-auto mt-20 px-6">
@@ -97,11 +96,10 @@ export default function Recents() {
           <button
             key={f.title}
             onClick={() => setActiveFilter(f)}
-            className={`px-3 py-1 rounded-full ${
-              activeFilter.title === f.title
+            className={`px-3 py-1 rounded-full ${activeFilter.title === f.title
                 ? 'bg-cyan-600 text-white'
                 : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-            }`}
+              }`}
           >
             {f.title}
           </button>
@@ -110,6 +108,10 @@ export default function Recents() {
 
       {loading && <div className="text-center">Loading...</div>}
       {!loading && files.length === 0 && <div className="text-center">No recent files yet.</div>}
+
+      {!loading && files.length > 0 && filteredFiles.length === 0 && (
+        <div className="text-center">No files match this filter.</div>
+      )}
 
       {filteredFiles.length > 0 && (
         <ul className="mt-6 bg-white rounded-2xl shadow-lg p-6 divide-y divide-slate-200">
@@ -122,7 +124,7 @@ export default function Recents() {
               <div className="flex space-x-6">
                 <button onClick={() => handlePreview(file._id)} className="text-sm text-cyan-600 hover:text-yellow-200 transition duration-300">Preview</button>
                 <button onClick={() => handleDownload(file._id, file.name)} className="text-sm text-green-600 hover:text-yellow-200 transition duration-300">Download</button>
-                <button onClick={() => handleShare(file._id)} className="text-sm text-purple-500 hover:text-yellow-200 transition duration-30">Share</button>
+                <button onClick={() => handleShare(file._id)} className="text-sm text-purple-500 hover:text-yellow-200 transition duration-300">Share</button>
                 <button onClick={() => handleRename(file._id, file.name)} className="text-sm text-indigo-600 hover:text-yellow-200 transition duration-300">Rename</button>
                 <button onClick={() => handleMoveToTrash(file._id)} className="text-sm text-pink-600 hover:text-yellow-200 transition duration-300">Move to Trash</button>
               </div>

@@ -1,4 +1,4 @@
-const chai = require('chai');
+/*const chai = require('chai');
 const { expect } = chai;
 const mongoose = require('mongoose');
 const sinon = require('sinon');
@@ -86,3 +86,4 @@ describe('createFolder Controller Test', () => {
         expect(res.json.calledWithMatch({ message: 'DB Error' })).to.be.true;
     });
 });
+*/

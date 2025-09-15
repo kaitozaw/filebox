@@ -1,12 +1,13 @@
 const { writeLog } = require('../utils/logger');
 
 class AuditService {
-    constructor({ zipService, auditLogModel }) {
-        this.auditLogModel = auditLogModel;
+    constructor({ zipService, auditLogModel: AuditLog }) {
+        this.auditLogModel = AuditLog;
 
         if (zipService) {
             zipService.on('ZIP_CREATED', async (event) => {
                 try {
+                       // 👇 This is where AuditLog.create(...) happens
                     await this.auditLogModel.create({
                         user: event.userId,
                         folder: event.folderId,

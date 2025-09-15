@@ -17,6 +17,7 @@ const Navbar = () => {
                 {user ? (
                     <>
                         <Link to="/folders" className="mr-4 hover:text-yellow-200 transition duration-300">Folders</Link>
+                        <Link to="/trash" className="mr-4 transition duration-300 hover:text-yellow-200"> Trashes</Link>
                         <Link to="/profile" className="mr-4 hover:text-yellow-200 transition duration-300">Profile</Link>
                         <button
                             onClick={handleLogout}

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams} from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../axiosConfig';
 
@@ -104,17 +104,29 @@ const FileList = ({ folderId }) => {
         }
     };
 
-    const handleDelete = async (fileId) => {
-        const confirmed = window.confirm('Are you sure you want to delete this file?');
-        if (!confirmed) return;
+    // const handleDelete = async (fileId) => {
+    //     const confirmed = window.confirm('Are you sure you want to delete this file?');
+    //     if (!confirmed) return;
 
+    //     try {
+    //         await axiosInstance.delete(`/files/${fileId}`);
+    //         setFiles((prev) => prev.filter((file) => file._id !== fileId));
+    //     } catch (error) {
+    //         alert('Failed to delete file');
+    //     }
+    // };
+
+    const handleMoveToTrash = async fileId => {
+        const confirmed = window.confirm('Are you sure you want move this file to trash?')
+        if (!confirmed) return
+    
         try {
-            await axiosInstance.delete(`/files/${fileId}`);
-            setFiles((prev) => prev.filter((file) => file._id !== fileId));
+          await axiosInstance.delete(`/files/${fileId}`)
+          setFiles(prev => prev.filter(file => file._id !== fileId))
         } catch (error) {
-            alert('Failed to delete file');
+          alert('Failed to delete file')
         }
-    };
+      }
 
     return (
         <div className="max-w-lg mx-auto mt-20 px-6">
@@ -175,10 +187,10 @@ const FileList = ({ folderId }) => {
                                             Rename
                                         </button>
                                         <button
-                                            onClick={() => handleDelete(file._id)}
-                                            className="text-sm text-pink-600 hover:text-yellow-200 transition duration-300"
+                                        onClick={() => handleMoveToTrash(file._id)}
+                                        className="text-sm text-pink-600 transition duration-300 hover:text-yellow-200"
                                         >
-                                            Delete
+                                        Move to Trash
                                         </button>
                                     </div>
                                 </>

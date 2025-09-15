@@ -6,6 +6,7 @@ import Register from './pages/Register';
 import Profile from './pages/Profile';
 import Folders from './pages/Folders';
 import FileList from './pages/FileList';
+import Trashess from './pages/Trashess';
 import PrivateRoute from './routes/PrivateRoute';
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
                 <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
                 <Route path="/folders" element={<PrivateRoute><Folders /></PrivateRoute>} />
                 <Route path="/files/in-folder/:folderId" element={<PrivateRoute><FileList /></PrivateRoute>} />
+                <Route path="/trash" element={<PrivateRoute><Trashess /></PrivateRoute>} />
             </Routes>
         </Router>
     );

@@ -3,10 +3,12 @@ const path = require('path');
 const { AuthController } = require('../controllers/AuthController');
 const { FolderController } = require('../controllers/FolderController');
 const { FileController } = require('../controllers/FileController');
+const { TrashController } = require('../controllers/TrashController')
 
 const UserService = require('../services/UserService');
 const FolderService = require('../services/FolderService');
 const FileService = require('../services/FileService');
+const TrashService = require('../services/TrashService')
 
 const LocalStorage = require('../services/storage/LocalStorage');
 
@@ -21,14 +23,16 @@ function createContainer() {
     const userService = new UserService({ hasher, tokenUtil });
     const folderService = new FolderService();
     const fileService = new FileService({ storage });
+    const trashService = new TrashService({ storage })
 
     const authController = new AuthController({ userService });
     const folderController = new FolderController({ folderService });
     const fileController = new FileController({ fileService });
+    const trashController = new TrashController({ trashService })
 
     return {
-        services: { userService, folderService, fileService },
-        controllers: { authController, folderController, fileController },
+        services: { userService, folderService, fileService, trashService },
+        controllers: { authController, folderController, fileController, trashController },
     };
 }
 

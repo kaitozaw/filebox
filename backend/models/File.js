@@ -10,6 +10,7 @@ const fileSchema = new mongoose.Schema({
     publicId: { type: String, unique: true, sparse: true },
     expiresAt: { type: Date },
     s3Key: { type: String },
+    deletedAt: { type: Date, default: null },
     createdAt: { type: Date, default: Date.now }
 });
 

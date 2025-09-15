@@ -10,7 +10,8 @@ const fileSchema = new mongoose.Schema({
     publicId: { type: String, unique: true, sparse: true },
     expiresAt: { type: Date },
     s3Key: { type: String },
-    createdAt: { type: Date, default: Date.now }
+    createdAt: { type: Date, default: Date.now },
+    lastAccessedAt: { type: Date, default: null }
 });
 
 module.exports = mongoose.model('File', fileSchema);

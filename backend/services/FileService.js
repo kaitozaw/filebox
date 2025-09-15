@@ -32,6 +32,11 @@ class FileService {
         if (!file) throw new NotFoundError('File not found');
         if (file.user.toString() !== userId) throw new ForbiddenError('Not authorized to download this file');
         const { stream } = this.storage.stream(file.filePath);
+        let marked = false;
+        const markOnce = () => { if (marked) return; marked = true; this.touchAccess(file).catch(err => console.warn('[Download] touchAccess failed', err));};
+        if (typeof stream?.on === 'function') {
+            stream.on('end', markOnce);
+        }
         const headers = this.buildDownloadHeaders(file);
         return { stream, headers };
     }
@@ -91,8 +96,21 @@ class FileService {
             throw err;
         }
         const { stream } = this.storage.stream(file.filePath);
+        let marked = false;
+        const markOnce = () => { if (marked) return; marked = true; this.touchAccess(file).catch(err => console.warn('[Public Access] touchAccess failed', err)); };
+        if (typeof stream?.on === 'function') {
+            stream.on('end',  markOnce);
+        }
         const headers = this.buildDownloadHeaders(file);
         return { stream, headers };
+    }
+
+    async touchAccess(file) {
+        if (!file || !file._id) return;
+        try {
+            await File.updateOne( { _id:file._id }, { $set: { lastAccessedAt: new Date()} });
+        } catch (err) {console.warn('[FileService.touchAccess] failed to update lastAccessedAt', err);
+        }
     }
 }
 

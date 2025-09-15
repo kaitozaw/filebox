@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const sinon = require('sinon');
 
 const Folder = require('../models/Folder'); 
-const { createFolder } = require('../controllers/folderController');
+const { createFolder } = require('../controllers/FolderController');
 
 describe('createFolder Controller Test', () => {
     let createStub;

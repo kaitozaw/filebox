@@ -11,6 +11,7 @@ const fileSchema = new mongoose.Schema({
     expiresAt: { type: Date },
     s3Key: { type: String },
     createdAt: { type: Date, default: Date.now },
+    deleteAt: { type: Date, default: null},
     lastAccessedAt: { type: Date, default: null }
 });
 

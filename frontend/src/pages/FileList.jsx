@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../axiosConfig';
 
@@ -12,7 +12,7 @@ const FileList = ({ folderId }) => {
     const [editingFileId, setEditingFileId] = useState(null);
     const [editedFileName, setEditedFileName] = useState('');
     const [loading, setLoading] = useState(false);
-
+    const navigate = useNavigate()
     const loadFiles = useCallback(async () => {
         if (!effectiveFolderId) return;
         setLoading(true);
@@ -116,6 +116,10 @@ const FileList = ({ folderId }) => {
         }
     };
 
+    const handlePreview = fileId => {
+        navigate(`/files/${fileId}/preview`)
+    }
+
     return (
         <div className="max-w-lg mx-auto mt-20 px-6">
             <form onSubmit={handleUpload} className="bg-white rounded-2xl shadow-lg p-6 space-y-4">
@@ -156,6 +160,12 @@ const FileList = ({ folderId }) => {
                                 <>
                                     <span className="text-slate-800">{file.name} ({(file.size / 1024).toFixed(1)} KB)</span>
                                     <div className="flex space-x-2">
+                                        <button
+                                        onClick={() => handlePreview(file._id)}
+                                        className="text-sm text-blue-600 transition duration-300 hover:text-yellow-200"
+                                        >
+                                        Preview
+                                        </button>
                                         <button
                                             onClick={() => handleDownload(file._id, file.name)}
                                             className="text-sm text-green-600 hover:text-yellow-200 transition duration-300"

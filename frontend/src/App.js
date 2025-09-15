@@ -8,6 +8,7 @@ import Folders from './pages/Folders';
 import FileList from './pages/FileList';
 import PrivateRoute from './routes/PrivateRoute';
 import Recents from './pages/Recents';
+import Preview from './pages/Preview';
 
 function App() {
     const { user, loading } = useAuth();
@@ -26,6 +27,7 @@ function App() {
                 <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
                 <Route path="/folders" element={<PrivateRoute><Folders /></PrivateRoute>} />
                 <Route path="/files/in-folder/:folderId" element={<PrivateRoute><FileList /></PrivateRoute>} />
+                <Route path="/files/:fileId/preview" element={<PrivateRoute><Preview /></PrivateRoute>} />
                 <Route path="/recents" element={<PrivateRoute><Recents /></PrivateRoute>} />
             </Routes>
         </Router>

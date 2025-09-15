@@ -1,6 +1,7 @@
 const File = require('../models/File');
 const Folder = require('../models/Folder');
 const mime = require('mime');
+const fs = require('fs');
 const contentDisposition = require('content-disposition');
 const { v4: uuidv4 } = require('uuid');
 const { ValidationError, ForbiddenError, NotFoundError } = require('../utils/errors');
@@ -103,6 +104,17 @@ class FileService {
         }
         const headers = this.buildDownloadHeaders(file);
         return { stream, headers };
+    }
+
+    //zip service helper
+    async getFilesByFolder(userId, folderId) {
+        return await File.find({ user: userId, folder: folderId });
+    }
+
+    // Helper to get file stream by file document
+    async getFileStream(file) {
+        if (!file.filePath) throw new Error('File path missing');
+        return fs.createReadStream(file.filePath);
     }
 
     async touchAccess(file) {

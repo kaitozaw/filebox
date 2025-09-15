@@ -77,4 +77,23 @@ class FileController extends BaseController {
       }
     }
 
+    // GET /files/folder/:folderId
+    async getFilesByFolderId(req, res) {
+        try {
+            const { folderId } = req.params;
+
+            // Validate folderId
+            if (!folderId) return this.badRequest(res, 'Folder ID is required');
+
+            const files = await this.fileService.getFilesByFolder(req.user.id, folderId);
+
+            // Return object with 'files' key
+            return this.ok(res, { files });
+        } catch (err) {
+            console.error('getFilesByFolderId error:', err);
+            return this.handleError(res, err);
+        }
+    }
+}
+
 module.exports = { FileController };

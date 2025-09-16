@@ -8,8 +8,8 @@ class RecentController extends BaseController {
     }
 
     async getRecent(req, res) {
-      try { return this.ok(res, await this.recentService.listByUser(req.user.id)); }
-      catch (err) { return this.handleError(res, err); }
+        try { return this.ok(res, await this.recentService.listByUser(req.user.id)); }
+        catch (err) { return this.handleError(res, err); }
     }
 }
 

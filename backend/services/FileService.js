@@ -6,6 +6,7 @@ const contentDisposition = require('content-disposition');
 const { v4: uuidv4 } = require('uuid');
 const { ValidationError, ForbiddenError, NotFoundError } = require('../utils/errors');
 const PreviewFactory = require('./preview/PreviewFactory')
+
 class FileService {
     constructor({ storage }) {
         this.storage = storage;
@@ -108,54 +109,43 @@ class FileService {
         return { stream, headers };
     }
 
-    //zip service helper
-    async getFilesByFolder(userId, folderId) {
-        return await File.find({ user: userId, folder: folderId });
+    async touchAccess(file) {
+        if (!file || !file._id) return;
+        try { await File.updateOne( { _id:file._id }, { $set: { lastAccessedAt: new Date()} }); }
+        catch (err) { console.warn('[FileService.touchAccess] failed to update lastAccessedAt', err); }
     }
 
-    // Helper to get file stream by file document
     async getFileStream(file) {
         if (!file.filePath) throw new Error('File path missing');
         return fs.createReadStream(file.filePath);
     }
 
-    async touchAccess(file) {
-        if (!file || !file._id) return;
-        try {
-            await File.updateOne( { _id:file._id }, { $set: { lastAccessedAt: new Date()} });
-        } catch (err) {console.warn('[FileService.touchAccess] failed to update lastAccessedAt', err);
-        }
-    }
-
     async preview(userId, fileId, options = {}) {
         const file = await File.findById(fileId)
         if (!file) throw new NotFoundError('File not found')
-        if (file.user.toString() !== userId)
-          throw new ForbiddenError('Not authorized to preview this file')
-    
+        if (file.user.toString() !== userId) throw new ForbiddenError('Not authorized to preview this file')
         const renderer = this.previewFactory.for(file)
         return await renderer.render(file, options)
       }
     
-      async getFileDetails(userId, fileId) {
+    async getFileDetails(userId, fileId) {
         const file = await File.findById(fileId)
         if (!file) throw new NotFoundError('File not found')
-        if (file.user.toString() !== userId)
-          throw new ForbiddenError('Not authorized to view this file')
+        if (file.user.toString() !== userId) throw new ForbiddenError('Not authorized to view this file')
     
         return {
-          id: file._id,
-          name: file.name,
-          size: file.size,
-          mimetype: file.mimetype,
-          createdAt: file.createdAt,
-          updatedAt: file.updatedAt,
-          folder: file.folder,
-          publicId: file.publicId,
-          expiresAt: file.expiresAt,
-          deletedAt: file.deletedAt
+            id: file._id,
+            name: file.name,
+            size: file.size,
+            mimetype: file.mimetype,
+            createdAt: file.createdAt,
+            updatedAt: file.updatedAt,
+            folder: file.folder,
+            publicId: file.publicId,
+            expiresAt: file.expiresAt,
+            deletedAt: file.deletedAt
         }
-      }
+    }
 }
 
 module.exports = FileService;

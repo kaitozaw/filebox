@@ -6,6 +6,11 @@ class FolderService {
         const folders = await Folder.find({ user: userId }).sort({ createdAt: -1 });
         return folders.map((f) => ({ id: f._id, name: f.name, user: f.user, createdAt: f.createdAt }));
     }
+    async getFolderById(folderId) {
+        const folder = await Folder.findById(folderId);
+        if (!folder) throw new NotFoundError('Folder not found');
+        return folder;
+    }
 
     async create(userId, { name }) {
         if (!name) throw new ValidationError('Folder name is required');
@@ -29,15 +34,6 @@ class FolderService {
         if (folder.user.toString() !== userId) throw new ForbiddenError('Not authorized to delete this folder');
         await folder.deleteOne();
         return { message: 'Folder deleted successfully' };
-    }
-    async getFolderById(folderId) {
-        const folder = await Folder.findById(folderId);
-        if (!folder) {
-            const err = new Error('Folder not found');
-            err.name = 'NotFoundError';
-            throw err;
-        }
-        return folder;
     }
 }
 

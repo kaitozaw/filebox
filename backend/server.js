@@ -10,11 +10,9 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 connectDB();
-
 const container = createContainer();
 const { controllers } = container;
 
-// Routes
 const buildAuthRoutes = require('./routes/authRoutes');
 const buildFolderRoutes = require('./routes/folderRoutes');
 const buildFileRoutes = require('./routes/fileRoutes');
@@ -22,10 +20,7 @@ const buildPublicRoutes = require('./routes/publicRoutes');
 const buildRecentRoutes = require('./routes/recentRoutes');
 
 app.use('/api/auth', buildAuthRoutes({ authController: controllers.authController }));
-app.use('/api/folders', buildFolderRoutes({ 
-    folderController: controllers.folderController, 
-    zipController: controllers.zipController 
-}));
+app.use('/api/folders', buildFolderRoutes({ folderController: controllers.folderController, zipController: controllers.zipController }));
 app.use('/api/files', buildFileRoutes({ fileController: controllers.fileController }));
 app.use('/api/public', buildPublicRoutes({ fileController: controllers.fileController }));
 app.use('/api/recent', buildRecentRoutes({ recentController: controllers.recentController }));

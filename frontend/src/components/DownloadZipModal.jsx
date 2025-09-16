@@ -7,16 +7,15 @@ export default function DownloadZipModal({ folderId, onClose }) {
     const [files, setFiles] = useState([]);
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');   // new state
+    const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
-    const [retryAfter, setRetryAfter] = useState(null); // countdown state
+    const [retryAfter, setRetryAfter] = useState(null);
 
-    // Fetch files in folder
     useEffect(() => {
         if (!folderId || !user) return;
         const fetchFiles = async () => {
             try {
-                const res = await axios.get(`${process.env.REACT_APP_BASE_URL}/files/folder/${folderId}`, {
+                const res = await axios.get(`${process.env.REACT_APP_BASE_URL}/files/in-folder/${folderId}`, {
                     headers: { Authorization: `Bearer ${user.token}` }
                 });
                 setFiles(res.data.files || []);
@@ -29,17 +28,16 @@ export default function DownloadZipModal({ folderId, onClose }) {
         fetchFiles();
     }, [folderId, user]);
 
-    // countdown effect
     useEffect(() => {
         if (retryAfter === null) return;
         if (retryAfter <= 0) {
-        setRetryAfter(null);
-        setError('');
-        return;
+            setRetryAfter(null);
+            setError('');
+            return;
         }
 
         const timer = setTimeout(() => {
-        setRetryAfter((prev) => prev - 1);
+            setRetryAfter((prev) => prev - 1);
         }, 1000);
 
         return () => clearTimeout(timer);
@@ -92,31 +90,31 @@ export default function DownloadZipModal({ folderId, onClose }) {
             // Show success message
             setSuccess('Download successful!');
             } catch (err) {
-            console.error('ZIP download error:', err.response || err);
+                console.error('ZIP download error:', err.response || err);
 
-            if (err.response?.status === 429) {
-                try {
-                // Convert Blob → JSON
-                const text = await err.response.data.text();
-                const json = JSON.parse(text);
-                console.log("Quota error parsed JSON:", json);
+                if (err.response?.status === 429) {
+                    try {
+                        // Convert Blob → JSON
+                        const text = await err.response.data.text();
+                        const json = JSON.parse(text);
+                        console.log("Quota error parsed JSON:", json);
 
-                const details = json.details;
-                if (details) {
-                    setError(
-                    `Quota reached: 3 ZIPs every ${details.windowMinutes} min. You already used 3. Retry in ${details.retryAfterSeconds}s.`
-                    );
-                    setRetryAfter(details.retryAfterSeconds);
+                        const details = json.details;
+                        if (details) {
+                            setError(
+                            `Quota reached: 3 ZIPs every ${details.windowMinutes} min. You already used 3. Retry in ${details.retryAfterSeconds}s.`
+                            );
+                            setRetryAfter(details.retryAfterSeconds);
+                        } else {
+                            setError(json.message || 'Quota limit reached.');
+                        }
+                    } catch (parseErr) {
+                        console.error("Failed to parse quota error:", parseErr);
+                        setError('Quota limit reached. Please wait before retrying.');
+                    }
                 } else {
-                    setError(json.message || 'Quota limit reached.');
+                    setError(err.response?.data?.message || 'Failed to download ZIP');
                 }
-                } catch (parseErr) {
-                console.error("Failed to parse quota error:", parseErr);
-                setError('Quota limit reached. Please wait before retrying.');
-                }
-            } else {
-                setError(err.response?.data?.message || 'Failed to download ZIP');
-            }
             } finally {
                 setLoading(false); // this resets loading state
                 //onClose();   Activate this line if you want to close modal after zip download

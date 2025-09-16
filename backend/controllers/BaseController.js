@@ -13,7 +13,8 @@ class BaseController {
             (err?.name === 'ValidationError' ? 400 :
             err?.name === 'UnauthorizedError'    ? 401 :
             err?.name === 'ForbiddenError'    ? 403 :
-            err?.name === 'NotFoundError'   ? 404 : 500);
+            err?.name === 'NotFoundError'   ? 404 :
+            err?.name === 'TooManyRequestsError'   ? 429 : 500);
 
         const payload = { message: err?.message ?? 'Internal Server Error' };
         if (process.env.NODE_ENV !== 'production' && err?.stack) {

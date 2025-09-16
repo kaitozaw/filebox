@@ -1,16 +1,20 @@
 const File = require('../models/File');
 const Folder = require('../models/Folder');
 const mime = require('mime');
+const fs = require('fs');
 const contentDisposition = require('content-disposition');
 const { v4: uuidv4 } = require('uuid');
 const { ValidationError, ForbiddenError, NotFoundError } = require('../utils/errors');
+const PreviewFactory = require('./preview/PreviewFactory')
 
 class FileService {
     constructor({ storage }) {
         this.storage = storage;
+        this.previewFactory = PreviewFactory.create({ storage })
     }
 
-    buildDownloadHeaders(file) {
+    async buildDownloadHeaders(file) {
+        const mime = await import('mime')
         const type = file.mimetype || mime.getType(file.name) || 'application/octet-stream';
         const headers = {
             'Content-Type': type,
@@ -32,6 +36,11 @@ class FileService {
         if (!file) throw new NotFoundError('File not found');
         if (file.user.toString() !== userId) throw new ForbiddenError('Not authorized to download this file');
         const { stream } = this.storage.stream(file.filePath);
+        let marked = false;
+        const markOnce = () => { if (marked) return; marked = true; this.touchAccess(file).catch(err => console.warn('[Download] touchAccess failed', err));};
+        if (typeof stream?.on === 'function') {
+            stream.on('end', markOnce);
+        }
         const headers = this.buildDownloadHeaders(file);
         return { stream, headers };
     }
@@ -91,8 +100,51 @@ class FileService {
             throw err;
         }
         const { stream } = this.storage.stream(file.filePath);
+        let marked = false;
+        const markOnce = () => { if (marked) return; marked = true; this.touchAccess(file).catch(err => console.warn('[Public Access] touchAccess failed', err)); };
+        if (typeof stream?.on === 'function') {
+            stream.on('end',  markOnce);
+        }
         const headers = this.buildDownloadHeaders(file);
         return { stream, headers };
+    }
+
+    async touchAccess(file) {
+        if (!file || !file._id) return;
+        try { await File.updateOne( { _id:file._id }, { $set: { lastAccessedAt: new Date()} }); }
+        catch (err) { console.warn('[FileService.touchAccess] failed to update lastAccessedAt', err); }
+    }
+
+    async getFileStream(file) {
+        if (!file.filePath) throw new Error('File path missing');
+        return fs.createReadStream(file.filePath);
+    }
+
+    async preview(userId, fileId, options = {}) {
+        const file = await File.findById(fileId)
+        if (!file) throw new NotFoundError('File not found')
+        if (file.user.toString() !== userId) throw new ForbiddenError('Not authorized to preview this file')
+        const renderer = this.previewFactory.for(file)
+        return await renderer.render(file, options)
+      }
+    
+    async getFileDetails(userId, fileId) {
+        const file = await File.findById(fileId)
+        if (!file) throw new NotFoundError('File not found')
+        if (file.user.toString() !== userId) throw new ForbiddenError('Not authorized to view this file')
+    
+        return {
+            id: file._id,
+            name: file.name,
+            size: file.size,
+            mimetype: file.mimetype,
+            createdAt: file.createdAt,
+            updatedAt: file.updatedAt,
+            folder: file.folder,
+            publicId: file.publicId,
+            expiresAt: file.expiresAt,
+            deletedAt: file.deletedAt
+        }
     }
 }
 

@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+
 const Navbar = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
@@ -17,6 +18,7 @@ const Navbar = () => {
                 {user ? (
                     <>
                         <Link to="/folders" className="mr-4 hover:text-yellow-200 transition duration-300">Folders</Link>
+                        <Link to="/recents" className="mr-4 hover:text-yellow-200 transition duration-300">Recents</Link>
                         <Link to="/trash" className="mr-4 transition duration-300 hover:text-yellow-200"> Trashes</Link>
                         <Link to="/profile" className="mr-4 hover:text-yellow-200 transition duration-300">Profile</Link>
                         <button

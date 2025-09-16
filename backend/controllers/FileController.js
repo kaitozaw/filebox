@@ -7,8 +7,10 @@ class FileController extends BaseController {
     }
 
     async listFilesInFolder(req, res) {
-        try { return this.ok(res, await this.fileService.listInFolder(req.user.id, req.params.folderId)); }
-        catch (err) { return this.handleError(res, err); }
+        try {
+            const files = await this.fileService.listInFolder(req.user.id, req.params.folderId);
+            return this.ok(res, { files });
+        } catch (err) { return this.handleError(res, err); }
     }
 
     async downloadFile(req, res) {
@@ -51,6 +53,30 @@ class FileController extends BaseController {
             return this.handleError(res, err);
         }
     }
+
+    async getPreview(req, res) {
+        try {
+          const { stream, headers } = await this.fileService.preview(
+            req.user.id,
+            req.params.fileId,
+            req.query
+          )
+          Object.entries(headers).forEach(([k, v]) => v !== undefined && res.setHeader(k, v))
+          return stream.pipe(res)
+        } catch (err) {
+          if (err.status === 415)
+            return res.status(415).json({ message: 'Unsupported file type for preview' })
+          return this.handleError(res, err)
+        }
+      }
+    
+      async getFileDetails(req, res) {
+        try {
+          return this.ok(res, await this.fileService.getFileDetails(req.user.id, req.params.fileId))
+        } catch (err) {
+          return this.handleError(res, err)
+        }
+      }
 }
 
 module.exports = { FileController };

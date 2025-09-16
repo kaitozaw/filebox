@@ -21,4 +21,4 @@ class TooManyRequestsError extends AppError {
     constructor(message = 'Too many requests') { super(message, 429, 'TooManyRequestsError'); }
 }
 
-module.exports = { AppError, ValidationError, NotFoundError, ForbiddenError, UnauthorizedError };
+module.exports = { AppError, ValidationError, UnauthorizedError, ForbiddenError, NotFoundError, TooManyRequestsError };

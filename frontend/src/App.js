@@ -6,6 +6,7 @@ import Register from './pages/Register';
 import Profile from './pages/Profile';
 import Folders from './pages/Folders';
 import FileList from './pages/FileList';
+import Trashess from './pages/Trashess';
 import PrivateRoute from './routes/PrivateRoute';
 import Recents from './pages/Recents';
 import Preview from './pages/Preview';
@@ -29,6 +30,7 @@ function App() {
                 <Route path="/files/in-folder/:folderId" element={<PrivateRoute><FileList /></PrivateRoute>} />
                 <Route path="/files/:fileId/preview" element={<PrivateRoute><Preview /></PrivateRoute>} />
                 <Route path="/recents" element={<PrivateRoute><Recents /></PrivateRoute>} />
+                <Route path="/trash" element={<PrivateRoute><Trashess /></PrivateRoute>} />
             </Routes>
         </Router>
     );

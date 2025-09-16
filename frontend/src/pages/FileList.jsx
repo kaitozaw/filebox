@@ -24,7 +24,8 @@ const FileList = ({ folderId }) => {
         setLoading(true);
         try {
             const res = await axiosInstance.get(`/files/in-folder/${effectiveFolderId}`);
-            setFiles(res.data);
+            const payload = Array.isArray(res.data) ? res.data : (res.data.files || []);
+            setFiles(payload);
         } catch {
             alert('Failed to fetch files');
         } finally {

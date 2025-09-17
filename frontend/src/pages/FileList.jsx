@@ -126,20 +126,18 @@ const FileList = ({ folderId }) => {
     }
 
     return (
-        <div className="max-w-lg mx-auto mt-20 px-6">
-                
-        
-        <form onSubmit={handleUpload} className="bg-white rounded-2xl shadow-lg p-6 space-y-4">
-            <h1 className="text-3xl font-extrabold tracking-wide text-slate-900 text-center mb-2">Files in Folder</h1>
-            <input
-                type="file"
-                onChange={(e) => setFileToUpload(e.target.files[0])}
-                    className="w-full rounded-xl border border-slate-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-300"
+        <div className="max-w-5xl mx-auto mt-20 px-6">
+            <form onSubmit={handleUpload} className="bg-white rounded-2xl shadow-lg p-6 space-y-4">
+                <h1 className="text-3xl font-extrabold tracking-wide text-slate-900 text-center mb-2">Files in Folder</h1>
+                <input
+                    type="file"
+                    onChange={(e) => setFileToUpload(e.target.files[0])}
+                        className="w-full rounded-xl border border-slate-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-300"
                 />
                 <button type="submit" className="w-full bg-pink-500 text-white px-5 py-2.5 rounded-full hover:bg-pink-700 transition duration-300">
                     {loading ? 'Uploading...' : 'Upload File'}
                 </button>  
-                
+                    
             </form>
 
             {files.length > 0 && (
@@ -169,10 +167,10 @@ const FileList = ({ folderId }) => {
                                     <span className="text-slate-800">{file.name} ({(file.size / 1024).toFixed(1)} KB)</span>
                                     <div className="flex space-x-2">
                                         <button
-                                        onClick={() => handlePreview(file._id)}
-                                        className="text-sm text-blue-600 transition duration-300 hover:text-yellow-200"
+                                            onClick={() => handlePreview(file._id)}
+                                            className="text-sm text-blue-600 transition duration-300 hover:text-yellow-200"
                                         >
-                                        Preview
+                                            Preview
                                         </button>
                                         <button
                                             onClick={() => handleDownload(file._id, file.name)}
@@ -206,12 +204,11 @@ const FileList = ({ folderId }) => {
                 </ul>
             )}
             {showZipModal && (
-            <DownloadZipModal
-                folderId={effectiveFolderId}
-                onClose={() => setShowZipModal(false)}
-            />
+                <DownloadZipModal
+                    folderId={effectiveFolderId}
+                    onClose={() => setShowZipModal(false)}
+                />
             )}
-            
             {files.length > 0 && (
                 <div className="mt-4 flex justify-end">
                     <button
@@ -220,11 +217,9 @@ const FileList = ({ folderId }) => {
                     >
                         Download ZIP
                     </button>
-            </div>
-        )}
-
-        </div>
-        
+                </div>
+            )}
+        </div>  
     );
 };
 

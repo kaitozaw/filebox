@@ -1,11 +1,10 @@
+const contentDisposition = require('content-disposition');
 const File = require('../models/File');
 const Folder = require('../models/Folder');
-const mime = require('mime');
 const fs = require('fs');
-const contentDisposition = require('content-disposition');
-const { v4: uuidv4 } = require('uuid');
-const { ValidationError, ForbiddenError, NotFoundError } = require('../utils/errors');
 const PreviewFactory = require('./preview/PreviewFactory')
+const { v4: uuidv4 } = require('uuid');
+const { ValidationError, ForbiddenError, NotFoundError, UnsupportedMediaTypeError } = require('../utils/errors');
 
 class FileService {
     constructor({ storage }) {
@@ -86,9 +85,9 @@ class FileService {
         const file = await File.findById(fileId);
         if (!file) throw new NotFoundError('File not found');
         if (file.user.toString() !== userId) throw new ForbiddenError('Not authorized to delete this file');
-        await this.storage.remove(file.filePath);
-        await file.deleteOne();
-        return { message: 'File deleted successfully' };
+        try { await File.updateOne( { _id:file._id }, { $set: { deletedAt: new Date()} }); }
+        catch (err) { console.warn('[FileService.remove] failed to update deletedAt', err); }
+        return { message: 'File trashed successfully' };
     }
 
     async accessPublic(publicId) {
@@ -115,18 +114,13 @@ class FileService {
         catch (err) { console.warn('[FileService.touchAccess] failed to update lastAccessedAt', err); }
     }
 
-    async getFileStream(file) {
-        if (!file.filePath) throw new Error('File path missing');
-        return fs.createReadStream(file.filePath);
-    }
-
     async preview(userId, fileId, options = {}) {
         const file = await File.findById(fileId)
         if (!file) throw new NotFoundError('File not found')
         if (file.user.toString() !== userId) throw new ForbiddenError('Not authorized to preview this file')
         const renderer = this.previewFactory.for(file)
         return await renderer.render(file, options)
-      }
+    }
     
     async getFileDetails(userId, fileId) {
         const file = await File.findById(fileId)
@@ -145,6 +139,11 @@ class FileService {
             expiresAt: file.expiresAt,
             deletedAt: file.deletedAt
         }
+    }
+
+    async getFileStream(file) {
+        if (!file.filePath) throw new Error('File path missing');
+        return fs.createReadStream(file.filePath);
     }
 }
 

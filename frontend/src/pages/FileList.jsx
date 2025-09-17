@@ -4,7 +4,6 @@ import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../axiosConfig';
 import DownloadZipModal from '../components/DownloadZipModal';
 
-
 const FileList = ({ folderId }) => {
     const { user } = useAuth();
     const { folderId: folderIdParam } = useParams();
@@ -111,29 +110,16 @@ const FileList = ({ folderId }) => {
         }
     };
 
-    // const handleDelete = async (fileId) => {
-    //     const confirmed = window.confirm('Are you sure you want to delete this file?');
-    //     if (!confirmed) return;
-
-    //     try {
-    //         await axiosInstance.delete(`/files/${fileId}`);
-    //         setFiles((prev) => prev.filter((file) => file._id !== fileId));
-    //     } catch (error) {
-    //         alert('Failed to delete file');
-    //     }
-    // };
-
     const handleMoveToTrash = async fileId => {
         const confirmed = window.confirm('Are you sure you want move this file to trash?')
         if (!confirmed) return
-    
         try {
-          await axiosInstance.delete(`/files/${fileId}`)
-          setFiles(prev => prev.filter(file => file._id !== fileId))
+            await axiosInstance.delete(`/files/${fileId}`)
+            setFiles(prev => prev.filter(file => file._id !== fileId))
         } catch (error) {
-          alert('Failed to delete file')
+            alert('Failed to delete file')
         }
-      }
+    }
 
     const handlePreview = fileId => {
         navigate(`/files/${fileId}/preview`)
@@ -207,8 +193,8 @@ const FileList = ({ folderId }) => {
                                             Rename
                                         </button>
                                         <button
-                                        onClick={() => handleMoveToTrash(file._id)}
-                                        className="text-sm text-pink-600 transition duration-300 hover:text-yellow-200"
+                                            onClick={() => handleMoveToTrash(file._id)}
+                                            className="text-sm text-pink-600 transition duration-300 hover:text-yellow-200"
                                         >
                                         Move to Trash
                                         </button>

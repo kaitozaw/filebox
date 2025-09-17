@@ -14,6 +14,7 @@ class BaseController {
             err?.name === 'UnauthorizedError'    ? 401 :
             err?.name === 'ForbiddenError'    ? 403 :
             err?.name === 'NotFoundError'   ? 404 :
+            err?.name === 'UnsupportedMediaTypeError'   ? 415 :
             err?.name === 'TooManyRequestsError'   ? 429 : 500);
 
         const payload = { message: err?.message ?? 'Internal Server Error' };

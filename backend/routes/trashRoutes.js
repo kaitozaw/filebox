@@ -1,18 +1,12 @@
 const express = require('express')
 const { protect } = require('../middleware/authMiddleware')
 
-function buildTrashRoutes({ trashController }) {
-  const router = express.Router()
+module.exports = ({ trashController }) => {
+    const router = express.Router();
 
-  router.use(protect)
+    router.get('/', protect, trashController.listTrashes.bind(trashController))
+    router.post('/:fileId/restore', protect, trashController.restoreTrash.bind(trashController))
+    router.delete('/:fileId', protect, trashController.purgeTrash.bind(trashController))
 
-  router.get('/', trashController.listTrashes.bind(trashController))
-
-  router.post('/:fileId/restore', trashController.restoreTrash.bind(trashController))
-
-  router.delete('/:fileId', trashController.purgeTrash.bind(trashController))
-
-  return router
-}
-
-module.exports = buildTrashRoutes
+    return router;
+};

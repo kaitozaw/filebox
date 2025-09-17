@@ -49,46 +49,45 @@ const Trashess = () => {
     }
 
     return (
-    <div className="max-w-lg px-6 mx-auto mt-20">
-        <div className="p-6 bg-white shadow-lg rounded-2xl">
-        <h1 className="mb-6 text-3xl font-extrabold tracking-wide text-slate-900">Trashes</h1>
-
-        <div className="space-y-4">
-            <ul className="divide-y divide-slate-200">
-            {trashFiles.map(file => (
-                <li
-                key={file._id}
-                className="flex items-center justify-between px-4 py-4 transition duration-300 hover:bg-slate-50 rounded-xl"
-                >
-                <div className="flex-1">
-                    <div className="flex items-center space-x-3">
-                    <span className="font-medium text-slate-800">{file.name}</span>
-                    <span className="text-sm text-slate-500">
-                        ({(file.size / 1024).toFixed(1)} KB)
-                    </span>
-                    </div>
-                    <div className="mt-1 text-sm text-slate-500">Trashed at: {file.deletedAt}</div>
+        <div className="max-w-5xl mx-auto mt-20 px-6">
+            <div className="p-6 bg-white shadow-lg rounded-2xl">
+                <h1 className="mb-6 text-3xl font-extrabold tracking-wide text-slate-900">Trashes</h1>
+                <div className="space-y-4">
+                    <ul className="divide-y divide-slate-200">
+                        {trashFiles.map(file => (
+                            <li
+                                key={file._id}
+                                className="flex items-center justify-between px-4 py-4 transition duration-300 hover:bg-slate-50 rounded-xl"
+                            >
+                                <div className="flex-1">
+                                    <div className="flex items-center space-x-3">
+                                        <span className="font-medium text-slate-800">{file.name}</span>
+                                        <span className="text-sm text-slate-500">
+                                            ({(file.size / 1024).toFixed(1)} KB)
+                                        </span>
+                                    </div>
+                                    <div className="mt-1 text-sm text-slate-500">Trashed at: {file.deletedAt}</div>
+                                </div>
+                                <div className="flex space-x-2">
+                                    <button
+                                        onClick={() => handleRestore(file._id)}
+                                        className="text-sm text-green-600 transition duration-300 hover:text-yellow-200"
+                                    >
+                                        Restore
+                                    </button>
+                                    <button
+                                        onClick={() => handlePurge(file._id)}
+                                        className="text-sm text-pink-600 transition duration-300 hover:text-yellow-200"
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
                 </div>
-                <div className="flex space-x-2">
-                    <button
-                    onClick={() => handleRestore(file._id)}
-                    className="text-sm text-green-600 transition duration-300 hover:text-yellow-200"
-                    >
-                    Restore
-                    </button>
-                    <button
-                    onClick={() => handlePurge(file._id)}
-                    className="text-sm text-pink-600 transition duration-300 hover:text-yellow-200"
-                    >
-                    Delete
-                    </button>
-                </div>
-                </li>
-            ))}
-            </ul>
+            </div>
         </div>
-        </div>
-    </div>
     )
 }
 

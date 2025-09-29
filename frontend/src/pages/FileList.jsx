@@ -1,9 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../axiosConfig';
 import DownloadZipModal from '../components/DownloadZipModal';
-
 
 const FileList = ({ folderId }) => {
     const { user } = useAuth();
@@ -17,14 +16,15 @@ const FileList = ({ folderId }) => {
     const [editingFileId, setEditingFileId] = useState(null);
     const [editedFileName, setEditedFileName] = useState('');
     const [loading, setLoading] = useState(false);
-
+    const navigate = useNavigate()
 
     const loadFiles = useCallback(async () => {
         if (!effectiveFolderId) return;
         setLoading(true);
         try {
             const res = await axiosInstance.get(`/files/in-folder/${effectiveFolderId}`);
-            setFiles(res.data);
+            const payload = Array.isArray(res.data) ? res.data : (res.data.files || []);
+            setFiles(payload);
         } catch {
             alert('Failed to fetch files');
         } finally {
@@ -110,33 +110,34 @@ const FileList = ({ folderId }) => {
         }
     };
 
-    const handleDelete = async (fileId) => {
-        const confirmed = window.confirm('Are you sure you want to delete this file?');
-        if (!confirmed) return;
-
+    const handleMoveToTrash = async fileId => {
+        const confirmed = window.confirm('Are you sure you want move this file to trash?')
+        if (!confirmed) return
         try {
-            await axiosInstance.delete(`/files/${fileId}`);
-            setFiles((prev) => prev.filter((file) => file._id !== fileId));
+            await axiosInstance.delete(`/files/${fileId}`)
+            setFiles(prev => prev.filter(file => file._id !== fileId))
         } catch (error) {
-            alert('Failed to delete file');
+            alert('Failed to delete file')
         }
-    };
+    }
+
+    const handlePreview = fileId => {
+        navigate(`/files/${fileId}/preview`)
+    }
 
     return (
-        <div className="max-w-lg mx-auto mt-20 px-6">
-                
-        
-        <form onSubmit={handleUpload} className="bg-white rounded-2xl shadow-lg p-6 space-y-4">
-            <h1 className="text-3xl font-extrabold tracking-wide text-slate-900 text-center mb-2">Files in Folder</h1>
-            <input
-                type="file"
-                onChange={(e) => setFileToUpload(e.target.files[0])}
-                    className="w-full rounded-xl border border-slate-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-300"
+        <div className="max-w-5xl mx-auto mt-20 px-6">
+            <form onSubmit={handleUpload} className="bg-white rounded-2xl shadow-lg p-6 space-y-4">
+                <h1 className="text-3xl font-extrabold tracking-wide text-slate-900 text-center mb-2">Files in Folder</h1>
+                <input
+                    type="file"
+                    onChange={(e) => setFileToUpload(e.target.files[0])}
+                        className="w-full rounded-xl border border-slate-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-300"
                 />
                 <button type="submit" className="w-full bg-pink-500 text-white px-5 py-2.5 rounded-full hover:bg-pink-700 transition duration-300">
                     {loading ? 'Uploading...' : 'Upload File'}
                 </button>  
-                
+                    
             </form>
 
             {files.length > 0 && (
@@ -166,6 +167,12 @@ const FileList = ({ folderId }) => {
                                     <span className="text-slate-800">{file.name} ({(file.size / 1024).toFixed(1)} KB)</span>
                                     <div className="flex space-x-2">
                                         <button
+                                            onClick={() => handlePreview(file._id)}
+                                            className="text-sm text-blue-600 transition duration-300 hover:text-yellow-200"
+                                        >
+                                            Preview
+                                        </button>
+                                        <button
                                             onClick={() => handleDownload(file._id, file.name)}
                                             className="text-sm text-green-600 hover:text-yellow-200 transition duration-300"
                                         >
@@ -184,10 +191,10 @@ const FileList = ({ folderId }) => {
                                             Rename
                                         </button>
                                         <button
-                                            onClick={() => handleDelete(file._id)}
-                                            className="text-sm text-pink-600 hover:text-yellow-200 transition duration-300"
+                                            onClick={() => handleMoveToTrash(file._id)}
+                                            className="text-sm text-pink-600 transition duration-300 hover:text-yellow-200"
                                         >
-                                            Delete
+                                        Move to Trash
                                         </button>
                                     </div>
                                 </>
@@ -197,12 +204,11 @@ const FileList = ({ folderId }) => {
                 </ul>
             )}
             {showZipModal && (
-            <DownloadZipModal
-                folderId={effectiveFolderId}
-                onClose={() => setShowZipModal(false)}
-            />
+                <DownloadZipModal
+                    folderId={effectiveFolderId}
+                    onClose={() => setShowZipModal(false)}
+                />
             )}
-            
             {files.length > 0 && (
                 <div className="mt-4 flex justify-end">
                     <button
@@ -211,11 +217,9 @@ const FileList = ({ folderId }) => {
                     >
                         Download ZIP
                     </button>
-            </div>
-        )}
-
-        </div>
-        
+                </div>
+            )}
+        </div>  
     );
 };
 

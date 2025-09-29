@@ -7,8 +7,10 @@ class FileController extends BaseController {
     }
 
     async listFilesInFolder(req, res) {
-        try { return this.ok(res, await this.fileService.listInFolder(req.user.id, req.params.folderId)); }
-        catch (err) { return this.handleError(res, err); }
+        try {
+            const files = await this.fileService.listInFolder(req.user.id, req.params.folderId);
+            return this.ok(res, { files });
+        } catch (err) { return this.handleError(res, err); }
     }
 
     async downloadFile(req, res) {
@@ -52,25 +54,22 @@ class FileController extends BaseController {
         }
     }
 
-    // GET /files/folder/:folderId
-    async getFilesByFolderId(req, res) {
+    async getPreview(req, res) {
         try {
-            const { folderId } = req.params;
-
-            // Validate folderId
-            if (!folderId) return this.badRequest(res, 'Folder ID is required');
-
-            const files = await this.fileService.getFilesByFolder(req.user.id, folderId);
-
-            // Return object with 'files' key
-            return this.ok(res, { files });
-        } catch (err) {
-            console.error('getFilesByFolderId error:', err);
-            return this.handleError(res, err);
-        }
+            const { stream, headers } = await this.fileService.preview(
+                req.user.id,
+                req.params.fileId,
+                req.query
+            )
+            Object.entries(headers).forEach(([k, v]) => v !== undefined && res.setHeader(k, v))
+            return stream.pipe(res)
+        } catch (err) { return this.handleError(res, err) }
     }
 
-
+    async getFileDetails(req, res) {
+        try { return this.ok(res, await this.fileService.getFileDetails(req.user.id, req.params.fileId)) }
+        catch (err) { return this.handleError(res, err) }
+    }
 }
 
 module.exports = { FileController };

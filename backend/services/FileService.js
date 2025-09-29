@@ -1,17 +1,19 @@
+const contentDisposition = require('content-disposition');
 const File = require('../models/File');
 const Folder = require('../models/Folder');
-const mime = require('mime');
 const fs = require('fs');
-const contentDisposition = require('content-disposition');
+const PreviewFactory = require('./preview/PreviewFactory')
 const { v4: uuidv4 } = require('uuid');
-const { ValidationError, ForbiddenError, NotFoundError } = require('../utils/errors');
+const { ValidationError, ForbiddenError, NotFoundError, UnsupportedMediaTypeError } = require('../utils/errors');
 
 class FileService {
     constructor({ storage }) {
         this.storage = storage;
+        this.previewFactory = PreviewFactory.create({ storage })
     }
 
-    buildDownloadHeaders(file) {
+    async buildDownloadHeaders(file) {
+        const mime = await import('mime')
         const type = file.mimetype || mime.getType(file.name) || 'application/octet-stream';
         const headers = {
             'Content-Type': type,
@@ -33,6 +35,11 @@ class FileService {
         if (!file) throw new NotFoundError('File not found');
         if (file.user.toString() !== userId) throw new ForbiddenError('Not authorized to download this file');
         const { stream } = this.storage.stream(file.filePath);
+        let marked = false;
+        const markOnce = () => { if (marked) return; marked = true; this.touchAccess(file).catch(err => console.warn('[Download] touchAccess failed', err));};
+        if (typeof stream?.on === 'function') {
+            stream.on('end', markOnce);
+        }
         const headers = this.buildDownloadHeaders(file);
         return { stream, headers };
     }
@@ -78,9 +85,9 @@ class FileService {
         const file = await File.findById(fileId);
         if (!file) throw new NotFoundError('File not found');
         if (file.user.toString() !== userId) throw new ForbiddenError('Not authorized to delete this file');
-        await this.storage.remove(file.filePath);
-        await file.deleteOne();
-        return { message: 'File deleted successfully' };
+        try { await File.updateOne( { _id:file._id }, { $set: { deletedAt: new Date()} }); }
+        catch (err) { console.warn('[FileService.remove] failed to update deletedAt', err); }
+        return { message: 'File trashed successfully' };
     }
 
     async accessPublic(publicId) {
@@ -92,21 +99,52 @@ class FileService {
             throw err;
         }
         const { stream } = this.storage.stream(file.filePath);
+        let marked = false;
+        const markOnce = () => { if (marked) return; marked = true; this.touchAccess(file).catch(err => console.warn('[Public Access] touchAccess failed', err)); };
+        if (typeof stream?.on === 'function') {
+            stream.on('end',  markOnce);
+        }
         const headers = this.buildDownloadHeaders(file);
         return { stream, headers };
     }
 
-    //zip service helper
-    async getFilesByFolder(userId, folderId) {
-        return await File.find({ user: userId, folder: folderId });
+    async touchAccess(file) {
+        if (!file || !file._id) return;
+        try { await File.updateOne( { _id:file._id }, { $set: { lastAccessedAt: new Date()} }); }
+        catch (err) { console.warn('[FileService.touchAccess] failed to update lastAccessedAt', err); }
     }
 
-    // Helper to get file stream by file document
+    async preview(userId, fileId, options = {}) {
+        const file = await File.findById(fileId)
+        if (!file) throw new NotFoundError('File not found')
+        if (file.user.toString() !== userId) throw new ForbiddenError('Not authorized to preview this file')
+        const renderer = this.previewFactory.for(file)
+        return await renderer.render(file, options)
+    }
+    
+    async getFileDetails(userId, fileId) {
+        const file = await File.findById(fileId)
+        if (!file) throw new NotFoundError('File not found')
+        if (file.user.toString() !== userId) throw new ForbiddenError('Not authorized to view this file')
+    
+        return {
+            id: file._id,
+            name: file.name,
+            size: file.size,
+            mimetype: file.mimetype,
+            createdAt: file.createdAt,
+            updatedAt: file.updatedAt,
+            folder: file.folder,
+            publicId: file.publicId,
+            expiresAt: file.expiresAt,
+            deletedAt: file.deletedAt
+        }
+    }
+
     async getFileStream(file) {
         if (!file.filePath) throw new Error('File path missing');
         return fs.createReadStream(file.filePath);
     }
-
 }
 
 module.exports = FileService;

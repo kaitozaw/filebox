@@ -1,8 +1,8 @@
 const { writeLog } = require('../utils/logger');
 
 class AuditService {
-    constructor({ zipService, auditLogModel: AuditLog }) {
-        this.auditLogModel = AuditLog;
+    constructor({ zipService, auditLogModel }) {
+        this.auditLogModel = auditLogModel;
 
         if (zipService) {
             zipService.on('ZIP_CREATED', async (event) => {

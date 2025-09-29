@@ -92,7 +92,7 @@ const Folders = () => {
     };
 
     return (
-        <div className="max-w-lg mx-auto mt-20 px-6">
+        <div className="max-w-5xl mx-auto mt-20 px-6">
             <form onSubmit={handleCreate} className="bg-white rounded-2xl shadow-lg p-6 space-y-4">
                 <h1 className="text-3xl font-extrabold tracking-wide text-slate-900 text-center mb-2">Create Folder</h1>
                 <input

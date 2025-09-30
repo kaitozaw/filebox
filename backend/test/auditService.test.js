@@ -2,38 +2,49 @@
 const { expect } = require('chai');
 const { EventEmitter } = require('events');
 const path = require('path');
+const Module = require('module');
 
-describe('AuditService', () => {
-    const projectRoot = path.resolve(__dirname, '..'); // adjust if your tests live elsewhere
-    const auditServicePath = path.resolve(projectRoot, 'servies/observer/AuditService.js'); 
-    const loggerPath = path.resolve(path.dirname(auditServicePath), '../../utils/logger');
-    const auditLogModelPath = path.resolve(path.dirname(auditServicePath), '../../models/AuditLog');
+// Point this to your real file:
+const projectRoot = path.resolve(__dirname, '..');
+const auditServicePath = path.resolve(projectRoot, 'services/observer/AuditService.js');
 
-    // Helpers to (re)load module-under-test with fresh mocks each test
-    const loadWithMocks = (mocks) => {
-        // Wipe any previous cached modules so our stubs take effect
-        delete require.cache[auditServicePath];
-        delete require.cache[loggerPath];
-        delete require.cache[auditLogModelPath];
-
-        // Install mocks into require cache
-        require.cache[loggerPath] = { exports: mocks.logger };
-        require.cache[auditLogModelPath] = { exports: mocks.auditLogModel };
-
-        // Now require the module-under-test, which will see our mocks
-        return require(auditServicePath);
+// helper: resolve module IDs exactly as seen by AuditService.js
+const resolveFromSUT = (request) => {
+    const basedir = path.dirname(auditServicePath);
+    return Module._resolveFilename(request, {
+        id: auditServicePath,
+        filename: auditServicePath,
+        paths: Module._nodeModulePaths(basedir),
+    });
     };
 
-    // Simple spy recorder without external libs
+    const resolvedLoggerId   = resolveFromSUT('../../utils/logger');
+    const resolvedAuditLogId = resolveFromSUT('../../models/AuditLog');
+
+    const loadWithMocks = (mocks) => {
+    // clear caches
+    [auditServicePath, resolvedLoggerId, resolvedAuditLogId].forEach((id) => delete require.cache[id]);
+
+    // install mocks under the exact IDs AuditService will require
+    require.cache[resolvedLoggerId]   = { exports: mocks.logger };
+    require.cache[resolvedAuditLogId] = { exports: mocks.auditLogModel };
+
+    // load SUT
+    return require(auditServicePath);
+    };
+
+    // tiny spy
     const makeSpy = () => {
-        const calls = [];
-        const fn = (...args) => { calls.push(args); };
-        fn.calls = calls;
-        return fn;
+    const calls = [];
+    const fn = (...args) => { calls.push(args); };
+    fn.calls = calls;
+    return fn;
     };
 
     class FakeZipService extends EventEmitter {}
+    const tick = () => new Promise((r) => setImmediate(r));
 
+    describe('AuditService', () => {
     const sampleEvent = {
         userId: 'user-123',
         folderId: 'folder-456',
@@ -41,11 +52,7 @@ describe('AuditService', () => {
         timestamp: '2025-09-30T01:23:45.000Z',
     };
 
-    // Utility: wait for async handlers to run after emit
-    const tick = () => new Promise((r) => setImmediate(r));
-
     it('registers ZIP_CREATED listener and writes audit record + log on success', async () => {
-        // Arrange: mocks
         const writeLogSpy = makeSpy();
         const createSpy = async (doc) => { createSpy.calls.push([doc]); };
         createSpy.calls = [];
@@ -56,14 +63,12 @@ describe('AuditService', () => {
         });
 
         const zipService = new FakeZipService();
-
-        // Act: construct service (attaches listener), then emit event
         // eslint-disable-next-line no-new
         new AuditService({ zipService });
-        zipService.emit('ZIP_CREATED', sampleEvent);
-        await tick();
 
-        // Assert: AuditLog.create called with expected document
+        zipService.emit('ZIP_CREATED', sampleEvent);
+        await tick(); // allow async handler to run
+
         expect(createSpy.calls).to.have.length(1);
         expect(createSpy.calls[0][0]).to.deep.equal({
         user: sampleEvent.userId,
@@ -72,7 +77,6 @@ describe('AuditService', () => {
         createdAt: sampleEvent.timestamp,
         });
 
-        // Assert: writeLog called once with formatted message
         expect(writeLogSpy.calls).to.have.length(1);
         const [channel, message] = writeLogSpy.calls[0];
         expect(channel).to.equal('audit');
@@ -82,7 +86,6 @@ describe('AuditService', () => {
     });
 
     it('logs a failure message if AuditLog.create throws', async () => {
-        // Arrange: failing create
         const writeLogSpy = makeSpy();
         const error = new Error('DB write failed');
         const createFail = async () => { throw error; };
@@ -93,14 +96,12 @@ describe('AuditService', () => {
         });
 
         const zipService = new FakeZipService();
-
-        // Act
         // eslint-disable-next-line no-new
         new AuditService({ zipService });
+
         zipService.emit('ZIP_CREATED', sampleEvent);
         await tick();
 
-        // Assert: writeLog called with failure note
         expect(writeLogSpy.calls).to.have.length(1);
         const [channel, message] = writeLogSpy.calls[0];
         expect(channel).to.equal('audit');
@@ -108,7 +109,6 @@ describe('AuditService', () => {
     });
 
     it('does nothing when constructed without a zipService', async () => {
-        // Arrange: spies should never be called since no listener is attached
         const writeLogSpy = makeSpy();
         const createSpy = async () => { createSpy.calls.push([]); };
         createSpy.calls = [];
@@ -118,12 +118,10 @@ describe('AuditService', () => {
         auditLogModel: { create: createSpy },
         });
 
-        // Act
         // eslint-disable-next-line no-new
-        new AuditService({}); // no zipService provided
-        // (No event to emit)
+        new AuditService({});
+        await tick();
 
-        // Assert
         expect(createSpy.calls).to.have.length(0);
         expect(writeLogSpy.calls).to.have.length(0);
     });

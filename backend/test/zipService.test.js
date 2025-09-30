@@ -3,40 +3,41 @@ const { expect } = require('chai');
 const { EventEmitter } = require('events');
 const { PassThrough } = require('stream');
 const path = require('path');
+const Module = require('module');
 
 describe('ZipService', () => {
-    const projectRoot = path.resolve(__dirname, '..'); // adjust if your tests live elsewhere
-    const zipServicePath = path.resolve(projectRoot, 'services/zip/ZipService.js'); // <-- UPDATE THIS
+    const projectRoot = path.resolve(__dirname, '..');
+    const zipServicePath = path.resolve(projectRoot, 'services/zip/ZipService.js');
 
-    // ZipService requires 'archiver' (a package). We'll inject a fake as:
-    //   <projectRoot>/node_modules/archiver/index.js
-    const fakeArchiverId = path.resolve(projectRoot, 'node_modules/archiver/index.js');
+    // Resolve dependency IDs EXACTLY as ZipService.js will
+    const resolveFromSUT = (request) => {
+        const basedir = path.dirname(zipServicePath);
+        return Module._resolveFilename(request, {
+        id: zipServicePath,
+        filename: zipServicePath,
+        paths: Module._nodeModulePaths(basedir),
+        });
+    };
+    const resolvedArchiverId = resolveFromSUT('archiver');
 
-    // Helper: fresh-load SUT with injected archiver mock
-    const loadWithMocks = (archiverMockFactory) => {
-        delete require.cache[zipServicePath];
-        delete require.cache[fakeArchiverId];
-
-        // Install the mock archiver factory into require cache
-        require.cache[fakeArchiverId] = { exports: archiverMockFactory };
-
-        return require(zipServicePath);
+    // Fresh-load SUT with injected archiver mock
+    const loadWithArchiverMock = (archiverMockFactory) => {
+        [zipServicePath, resolvedArchiverId].forEach((id) => delete require.cache[id]);
+        require.cache[resolvedArchiverId] = { exports: archiverMockFactory };
+        return require(zipServicePath); // module.exports = ZipService
     };
 
-    // Tiny spy util (no sinon)
+    // Tiny spy (no sinon)
     const makeSpy = () => {
         const calls = [];
-        const fn = async (...args) => { calls.push(args); }; // async to match getFileStream usage
+        const fn = async (...args) => { calls.push(args); };
         fn.calls = calls;
         return fn;
     };
 
-    // Build a fake "archiver" export that records calls and exposes the last instance
+    // Fake "archiver" export that records calls and exposes last instance
     const makeFakeArchiverFactory = () => {
-        const state = {
-        lastArgs: null,
-        lastInstance: null,
-        };
+        const state = { lastArgs: null, lastInstance: null };
 
         const factory = (format, options) => {
         state.lastArgs = { format, options };
@@ -54,7 +55,6 @@ describe('ZipService', () => {
         return inst;
         };
 
-        // Expose a getter for tests
         factory.__getState = () => state;
         return factory;
     };
@@ -67,7 +67,6 @@ describe('ZipService', () => {
     ];
 
     it('creates a zip, appends files, pipes to PassThrough, finalizes, and returns expected response', async () => {
-        // Arrange: archiver mock and fileService stub
         const archiverFactory = makeFakeArchiverFactory();
 
         const streamsByFile = new Map();
@@ -77,25 +76,28 @@ describe('ZipService', () => {
         return s;
         };
 
-        const ZipService = loadWithMocks(archiverFactory);
+        const ZipService = loadWithArchiverMock(archiverFactory);
         const zipService = new ZipService({ fileService: { getFileStream } });
 
-        // Act
+        // Listen for ZIP_CREATED **before** invoking zipFolder (the event fires inside zipFolder)
+        let eventPayload = null;
+        zipService.once('ZIP_CREATED', (p) => { eventPayload = p; });
+
         const result = await zipService.zipFolder({ folder, files });
 
-        // Assert: archiver created with correct args
+        // Assert archiver called with correct args
         const archState = archiverFactory.__getState();
         expect(archState.lastArgs).to.deep.equal({
         format: 'zip',
         options: { zlib: { level: 9 } },
         });
 
-        // Assert: `pipe` destination is the returned stream (PassThrough)
+        // Assert piping to returned PassThrough
         const archive = archState.lastInstance;
         expect(archive.pipeDest).to.equal(result.stream);
         expect(result.stream).to.be.instanceOf(PassThrough);
 
-        // Assert: append called for each file with correct name, using the same streams returned by fileService
+        // Assert each file appended with correct name and stream
         expect(archive.appendCalls).to.have.length(files.length);
         for (let i = 0; i < files.length; i++) {
         const [streamArg, optsArg] = archive.appendCalls[i];
@@ -103,22 +105,14 @@ describe('ZipService', () => {
         expect(streamArg).to.equal(streamsByFile.get(files[i].name));
         }
 
-        // Assert: finalize called exactly once
+        // finalize called once
         expect(archive.finalizeCalls).to.equal(1);
 
-        // Assert: return shape (headers + filename)
+        // return shape
         expect(result.filename).to.equal('MyFolder.zip');
         expect(result.headers).to.deep.equal({ 'Content-Type': 'application/zip' });
 
-        // Assert: emits ZIP_CREATED with correct payload
-        let eventPayload = null;
-        zipService.once('ZIP_CREATED', (p) => { eventPayload = p; });
-
-        // Manually emit because our fake archiver doesn't do any async progression;
-        // but ZipService emits this synchronously after finalize(), so eventPayload should already be set.
-        // Give event loop a tick just in case:
-        await new Promise((r) => setImmediate(r));
-
+        // ZIP_CREATED event payload (now captured)
         expect(eventPayload).to.be.an('object');
         expect(eventPayload.folderId).to.equal(folder._id);
         expect(eventPayload.userId).to.equal(folder.user);
@@ -128,7 +122,7 @@ describe('ZipService', () => {
 
     it('forwards archiver errors to the returned stream', async () => {
         const archiverFactory = makeFakeArchiverFactory();
-        const ZipService = loadWithMocks(archiverFactory);
+        const ZipService = loadWithArchiverMock(archiverFactory);
 
         const zipService = new ZipService({
         fileService: { getFileStream: async () => new PassThrough() },
@@ -136,40 +130,34 @@ describe('ZipService', () => {
 
         const { stream } = await zipService.zipFolder({ folder, files });
 
-        // Listen for errors on the returned stream
         let receivedError = null;
         stream.once('error', (e) => { receivedError = e; });
 
-        // Trigger an error from the archiver instance (after the method returns)
+        // Emit error from the archiver instance
         const { lastInstance } = archiverFactory.__getState();
         const boom = new Error('archiver exploded');
         lastInstance.emit('error', boom);
 
-        // Wait a tick for event propagation
         await new Promise((r) => setImmediate(r));
-
         expect(receivedError).to.equal(boom);
     });
 
     it('calls fileService.getFileStream for each file object passed in', async () => {
         const archiverFactory = makeFakeArchiverFactory();
 
-        // Spy-like getFileStream to record calls
         const getFileStream = makeSpy();
-        // Return a fresh PassThrough for each call
         getFileStream.impl = async () => new PassThrough();
         const getFileStreamWrapper = async (...args) => {
         await getFileStream(...args);
         return getFileStream.impl(...args);
         };
 
-        const ZipService = loadWithMocks(archiverFactory);
+        const ZipService = loadWithArchiverMock(archiverFactory);
         const zipService = new ZipService({ fileService: { getFileStream: getFileStreamWrapper } });
 
         await zipService.zipFolder({ folder, files });
 
         expect(getFileStream.calls).to.have.length(files.length);
-        // Ensure the exact file objects were passed
         expect(getFileStream.calls[0][0]).to.equal(files[0]);
         expect(getFileStream.calls[1][0]).to.equal(files[1]);
     });

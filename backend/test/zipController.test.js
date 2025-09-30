@@ -2,33 +2,34 @@
 const { expect } = require('chai');
 const { EventEmitter } = require('events');
 const path = require('path');
+const Module = require('module');
 
 describe('ZipController', () => {
-    const projectRoot = path.resolve(__dirname, '..'); // adjust if tests live elsewhere
-    const zipControllerPath = path.resolve(projectRoot, 'controllers/ZipController.js'); 
+    const projectRoot = path.resolve(__dirname, '..');
+    const zipControllerPath = path.resolve(projectRoot, 'controllers/ZipController.js');
 
-    // These are the module IDs ZipController requires:
-    //   './BaseController' (relative to ZipController)
-    //   'content-disposition' (package)
-    const inferredBaseControllerPath = path.resolve(path.dirname(zipControllerPath), './BaseController');
-    const fakeContentDispositionId = path.resolve(projectRoot, 'node_modules/content-disposition/index.js');
-
-    // Helper: wipe module caches and load SUT with mocks injected
-    const loadWithMocks = (mocks) => {
-        // Clean caches
-        delete require.cache[zipControllerPath];
-        delete require.cache[inferredBaseControllerPath];
-        delete require.cache[fakeContentDispositionId];
-
-        // Install mocks into require cache
-        require.cache[inferredBaseControllerPath] = { exports: mocks.BaseControllerClass };
-        require.cache[fakeContentDispositionId] = { exports: mocks.contentDisposition };
-
-        // Load SUT
-        return require(zipControllerPath);
+    // Resolve module IDs EXACTLY as the SUT will
+    const resolveFromSUT = (request) => {
+        const basedir = path.dirname(zipControllerPath);
+        return Module._resolveFilename(request, {
+        id: zipControllerPath,
+        filename: zipControllerPath,
+        paths: Module._nodeModulePaths(basedir),
+        });
     };
 
-    // Tiny spy utility (no sinon)
+    const resolvedBaseControllerId   = resolveFromSUT('./BaseController');
+    const resolvedContentDispId      = resolveFromSUT('content-disposition');
+
+    // Helper: wipe caches and load SUT with injected mocks
+    const loadWithMocks = (mocks) => {
+        [zipControllerPath, resolvedBaseControllerId, resolvedContentDispId].forEach((id) => delete require.cache[id]);
+        require.cache[resolvedBaseControllerId] = { exports: mocks.BaseControllerClass };
+        require.cache[resolvedContentDispId]    = { exports: mocks.contentDisposition };
+        return require(zipControllerPath); // expects: module.exports = { ZipController }
+    };
+
+    // Tiny spy (no sinon)
     const makeSpy = () => {
         const calls = [];
         const fn = (...args) => { calls.push(args); };
@@ -36,7 +37,7 @@ describe('ZipController', () => {
         return fn;
     };
 
-    // Fake stream for the happy/error paths
+    // Fake stream for zip results
     class FakeReadableStream extends EventEmitter {
         constructor() {
         super();
@@ -44,7 +45,6 @@ describe('ZipController', () => {
         }
         pipe(dest) {
         this.pipeCalls.push(dest);
-        // no real piping; tests only assert that pipe was invoked
         return dest;
         }
     }
@@ -66,7 +66,7 @@ describe('ZipController', () => {
         res.jsonPayloads = [];
         res.json = (obj) => {
         res.jsonPayloads.push(obj);
-        res.headersSent = true; // Express marks as sent after sending the body
+        res.headersSent = true; // simulate Express behavior after sending body
         return res;
         };
 
@@ -81,7 +81,7 @@ describe('ZipController', () => {
     const sampleReq = (overrides = {}) => ({
         user: { id: 'user-123' },
         params: { id: 'folder-456' },
-        query: {}, // can override with files query
+        query: {},
         ...overrides,
     });
 
@@ -96,20 +96,15 @@ describe('ZipController', () => {
     };
 
     it('zipFolder: sets headers and pipes stream to response (happy path)', async () => {
-        // Arrange: spies and mocks
         const contentDispositionSpy = makeSpy();
         const contentDisposition = (filename) => {
         contentDispositionSpy(filename);
         return `attachment; filename="${filename}"`;
         };
 
-        // Mock BaseController to capture handleError if called
         const handleErrorSpy = makeSpy();
-        class FakeBaseController {
-        handleError(res, err) { handleErrorSpy(res, err); }
-        }
+        class FakeBaseController { handleError(res, err) { handleErrorSpy(res, err); } }
 
-        // zipServiceProxy mock
         const zipFolderSpy = makeSpy();
         const zipResult = sampleZipResult();
         const zipServiceProxy = {
@@ -123,31 +118,26 @@ describe('ZipController', () => {
 
         const controller = new ZipController({ zipServiceProxy });
 
-        const req = sampleReq(); // no files query
+        const req = sampleReq();
         const res = makeFakeRes();
 
-        // Act
         await controller.zipFolder(req, res);
 
-        // Assert: service called with derived args
         expect(zipFolderSpy.calls).to.have.length(1);
         expect(zipFolderSpy.calls[0][0]).to.deep.equal({
         userId: 'user-123',
         folderId: 'folder-456',
-        fileIds: [], // from empty query
+        fileIds: [],
         });
 
-        // Assert: headers set
         expect(res.headers['Content-Type']).to.equal('application/zip');
         expect(contentDispositionSpy.calls).to.have.length(1);
         expect(contentDispositionSpy.calls[0][0]).to.equal('download.zip');
         expect(res.headers['Content-Disposition']).to.equal('attachment; filename="download.zip"');
 
-        // Assert: stream piped to res
         expect(zipResult.stream.pipeCalls).to.have.length(1);
         expect(zipResult.stream.pipeCalls[0]).to.equal(res);
 
-        // No errors
         expect(handleErrorSpy.calls).to.have.length(0);
     });
 
@@ -157,10 +147,7 @@ describe('ZipController', () => {
 
         const seenArgs = [];
         const zipServiceProxy = {
-        zipFolder: async (args) => {
-            seenArgs.push(args);
-            return sampleZipResult();
-        },
+        zipFolder: async (args) => { seenArgs.push(args); return sampleZipResult(); },
         };
 
         const { ZipController } = loadWithMocks({
@@ -182,14 +169,10 @@ describe('ZipController', () => {
         const contentDisposition = () => 'attachment; filename="a.zip"';
 
         const handleErrorSpy = makeSpy();
-        class FakeBaseController {
-        handleError(res, err) { handleErrorSpy(res, err); }
-        }
+        class FakeBaseController { handleError(res, err) { handleErrorSpy(res, err); } }
 
         const zipResult = sampleZipResult();
-        const zipServiceProxy = {
-        zipFolder: async () => zipResult,
-        };
+        const zipServiceProxy = { zipFolder: async () => zipResult };
 
         const { ZipController } = loadWithMocks({
         BaseControllerClass: FakeBaseController,
@@ -200,20 +183,18 @@ describe('ZipController', () => {
         const req = sampleReq();
         const res = makeFakeRes();
 
-        // Act: call, then emit error *before* any body has been sent
-        const p = controller.zipFolder(req, res);
-        // emit the stream error
+        // First, let the controller attach the error handler and start piping
+        await controller.zipFolder(req, res);
+
+        // Now emit the error while headersSent is still false in our fake res
         const err = new Error('boom');
         zipResult.stream.emit('error', err);
-        await p; // zipFolder awaited
 
-        // Assert: 500 JSON and no destroy (since headers not sent)
+        // Assertions
         expect(res.statusCode).to.equal(500);
         expect(res.jsonPayloads).to.have.length(1);
         expect(res.jsonPayloads[0]).to.deep.equal({ error: true, message: 'ZIP stream failed' });
         expect(res.destroyedWith).to.equal(null);
-
-        // No controller-level handleError here (handled in stream handler)
         expect(handleErrorSpy.calls).to.have.length(0);
     });
 
@@ -233,16 +214,14 @@ describe('ZipController', () => {
         const req = sampleReq();
         const res = makeFakeRes();
 
-        // Simulate that headers/body were already sent (like after piping starts)
+        // Simulate that response has already started
         res.headersSent = true;
 
         await controller.zipFolder(req, res);
 
-        // Emit error AFTER headers are sent
         const err = new Error('late error');
         zipResult.stream.emit('error', err);
 
-        // Assert: res.destroy called with error
         expect(res.destroyedWith).to.equal(err);
     });
 
@@ -250,14 +229,10 @@ describe('ZipController', () => {
         const contentDisposition = () => 'attachment; filename="c.zip"';
 
         const handleErrorSpy = makeSpy();
-        class FakeBaseController {
-        handleError(res, err) { handleErrorSpy(res, err); }
-        }
+        class FakeBaseController { handleError(res, err) { handleErrorSpy(res, err); } }
 
         const thrown = new Error('service failed');
-        const zipServiceProxy = {
-        zipFolder: async () => { throw thrown; },
-        };
+        const zipServiceProxy = { zipFolder: async () => { throw thrown; } };
 
         const { ZipController } = loadWithMocks({
         BaseControllerClass: FakeBaseController,

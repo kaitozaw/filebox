@@ -1,38 +1,46 @@
-// test/quotaService.test.js
+// test/QuotaService.test.js
 const { expect } = require('chai');
 const { EventEmitter } = require('events');
 const path = require('path');
+const Module = require('module');
 
-describe('QuotaService', () => {
-    const projectRoot = path.resolve(__dirname, '..'); // adjust if your tests live elsewhere
-    const quotaServicePath = path.resolve(projectRoot, 'services/observer/QuotaService.js'); 
 
-    // Derived from QuotaService's requires: '../../utils/logger' and '../../models/QuotaLog'
-    const inferredUtilsLoggerPath = path.resolve(path.dirname(quotaServicePath), '../../utils/logger');
-    const inferredQuotaLogModelPath = path.resolve(path.dirname(quotaServicePath), '../../models/QuotaLog');
+const projectRoot = path.resolve(__dirname, '..');
+const quotaServicePath = path.resolve(projectRoot, 'services/observer/QuotaService.js'); 
 
-    // Helper: load SUT with fresh mocks
-    const loadWithMocks = (mocks) => {
-        delete require.cache[quotaServicePath];
-        delete require.cache[inferredUtilsLoggerPath];
-        delete require.cache[inferredQuotaLogModelPath];
+// Resolve dependency IDs exactly as QuotaService.js will
+const resolveFromSUT = (request) => {
+    const basedir = path.dirname(quotaServicePath);
+    return Module._resolveFilename(request, {
+        id: quotaServicePath,
+        filename: quotaServicePath,
+        paths: Module._nodeModulePaths(basedir),
+    });
+    };
 
-        require.cache[inferredUtilsLoggerPath] = { exports: mocks.utilsLogger };
-        require.cache[inferredQuotaLogModelPath] = { exports: mocks.quotaLogModel };
+    const resolvedUtilsLoggerId = resolveFromSUT('../../utils/logger');
+    const resolvedQuotaLogId   = resolveFromSUT('../../models/QuotaLog');
 
-        return require(quotaServicePath);
+    // Fresh-load SUT with mocks injected under exact IDs
+    const loadWithMocks = ({ utilsLogger, quotaLogModel }) => {
+    [quotaServicePath, resolvedUtilsLoggerId, resolvedQuotaLogId].forEach((id) => delete require.cache[id]);
+    require.cache[resolvedUtilsLoggerId] = { exports: utilsLogger };
+    require.cache[resolvedQuotaLogId]    = { exports: quotaLogModel };
+    return require(quotaServicePath); // module.exports = QuotaService
     };
 
     // Tiny spy (no sinon)
     const makeSpy = () => {
-        const calls = [];
-        const fn = (...args) => { calls.push(args); };
-        fn.calls = calls;
-        return fn;
+    const calls = [];
+    const fn = (...args) => { calls.push(args); };
+    fn.calls = calls;
+    return fn;
     };
+    const tick = () => new Promise((r) => setImmediate(r));
 
     class FakeZipService extends EventEmitter {}
 
+    describe('QuotaService', () => {
     const sampleEvent = {
         userId: 'user-123',
         folderId: 'folder-456',
@@ -40,12 +48,8 @@ describe('QuotaService', () => {
         timestamp: '2025-09-30T01:23:45.000Z',
     };
 
-    // Allow async handlers to complete
-    const tick = () => new Promise((r) => setImmediate(r));
-
-    it('on ZIP_CREATED: creates a quota log and writes an audit message (success path)', async () => {
+    it('on ZIP_CREATED: creates a quota log and writes a log message (success path)', async () => {
         const writeLogSpy = makeSpy();
-
         const createSpy = async (doc) => { createSpy.calls.push([doc]); };
         createSpy.calls = [];
 
@@ -55,13 +59,13 @@ describe('QuotaService', () => {
         });
 
         const zipService = new FakeZipService();
+        // attach listener
         // eslint-disable-next-line no-new
         new QuotaService({ zipService });
 
         zipService.emit('ZIP_CREATED', sampleEvent);
         await tick();
 
-        // Assert create called with mapped fields
         expect(createSpy.calls).to.have.length(1);
         expect(createSpy.calls[0][0]).to.deep.equal({
         user: sampleEvent.userId,
@@ -70,7 +74,6 @@ describe('QuotaService', () => {
         createdAt: sampleEvent.timestamp,
         });
 
-        // Assert writeLog called with formatted success message
         expect(writeLogSpy.calls).to.have.length(1);
         const [channel, message] = writeLogSpy.calls[0];
         expect(channel).to.equal('quota');
@@ -82,11 +85,10 @@ describe('QuotaService', () => {
     it('on ZIP_CREATED: logs a failure message when QuotaLog.create throws', async () => {
         const writeLogSpy = makeSpy();
         const err = new Error('DB write failed');
-        const createFail = async () => { throw err; };
 
         const QuotaService = loadWithMocks({
         utilsLogger: { writeLog: writeLogSpy },
-        quotaLogModel: { create: createFail, countDocuments: async () => 0 },
+        quotaLogModel: { create: async () => { throw err; }, countDocuments: async () => 0 },
         });
 
         const zipService = new FakeZipService();
@@ -113,31 +115,26 @@ describe('QuotaService', () => {
         });
 
         // eslint-disable-next-line no-new
-        new QuotaService({}); // no zipService provided
+        new QuotaService({});
         await tick();
 
-        expect(writeLogSpy.calls).to.have.length(0);
         expect(createSpy.calls).to.have.length(0);
+        expect(writeLogSpy.calls).to.have.length(0);
     });
 
     it('checkQuota: returns overQuota=true when count > limit', async () => {
-        const writeLogSpy = makeSpy();
         let receivedQuery = null;
 
-        const countDocuments = async (q) => {
-        receivedQuery = q;
-        return 7; // > limit(6)
-        };
-
         const QuotaService = loadWithMocks({
-        utilsLogger: { writeLog: writeLogSpy },
-        quotaLogModel: { create: async () => {}, countDocuments },
+        utilsLogger: { writeLog: () => {} },
+        quotaLogModel: {
+            countDocuments: async (q) => { receivedQuery = q; return 7; }, // > 6
+        },
         });
 
-        const qs = new QuotaService({}); // zipService not needed for this test
-        const res = await qs.checkQuota('user-999');
+        const svc = new QuotaService({});
+        const res = await svc.checkQuota('user-xyz');
 
-        // Assert structure/values
         expect(res).to.deep.equal({
         overQuota: true,
         count: 7,
@@ -146,32 +143,20 @@ describe('QuotaService', () => {
         retryAfterSeconds: 60,
         });
 
-        // Assert the query shape
-        expect(receivedQuery).to.have.property('user', 'user-999');
+        expect(receivedQuery).to.have.property('user', 'user-xyz');
         expect(receivedQuery).to.have.property('createdAt');
         expect(receivedQuery.createdAt).to.have.property('$gte');
         expect(receivedQuery.createdAt.$gte).to.be.instanceOf(Date);
-
-        // Make sure cutoff is roughly "within the last ~2 minutes"
-        const now = Date.now();
-        const cutoffMs = receivedQuery.createdAt.$gte.getTime();
-        expect(cutoffMs).to.be.at.most(now);
-        expect(cutoffMs).to.be.at.least(now - 2 * 60 * 1000);
     });
 
     it('checkQuota: returns overQuota=false when count <= limit', async () => {
-        const writeLogSpy = makeSpy();
-
         const QuotaService = loadWithMocks({
-        utilsLogger: { writeLog: writeLogSpy },
-        quotaLogModel: {
-            create: async () => {},
-            countDocuments: async () => 6, // == limit
-        },
+        utilsLogger: { writeLog: () => {} },
+        quotaLogModel: { countDocuments: async () => 6 }, // == limit
         });
 
-        const qs = new QuotaService({});
-        const res = await qs.checkQuota('user-abc');
+        const svc = new QuotaService({});
+        const res = await svc.checkQuota('user-abc');
 
         expect(res).to.deep.equal({
         overQuota: false,

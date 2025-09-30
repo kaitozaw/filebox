@@ -1,49 +1,48 @@
-// test/loggerService.test.js
+// test/LoggerService.test.js
 const { expect } = require('chai');
 const { EventEmitter } = require('events');
 const path = require('path');
+const Module = require('module');
 
-describe('LoggerService', () => {
-    // Paths to the module-under-test and its dependencies (to be mocked)
-    const projectRoot = path.resolve(__dirname, '..'); // adjust if your tests live elsewhere
-    const loggerServicePath = path.resolve(projectRoot, 'services/observer/LoggerService.js'); 
 
-    // These are derived from how LoggerService requires them: '../../utils/logger'
-    const inferredUtilsLoggerPath = path.resolve(path.dirname(loggerServicePath), '../../utils/logger');
+const projectRoot = path.resolve(__dirname, '..');
+const loggerServicePath = path.resolve(projectRoot, 'services/observer/LoggerService.js');
 
-    // Helper: load the module-under-test with fresh mocks each time
-    const loadWithMocks = (mocks) => {
-        // clear caches so stubs take effect
-        delete require.cache[loggerServicePath];
-        delete require.cache[inferredUtilsLoggerPath];
-
-        // install mocks in the require cache
-        require.cache[inferredUtilsLoggerPath] = { exports: mocks.utilsLogger };
-
-        // load SUT (will read our mocks)
-        return require(loggerServicePath);
+// Resolve dependency IDs exactly as LoggerService.js will
+const resolveFromSUT = (request) => {
+    const basedir = path.dirname(loggerServicePath);
+    return Module._resolveFilename(request, {
+        id: loggerServicePath,
+        filename: loggerServicePath,
+        paths: Module._nodeModulePaths(basedir),
+    });
     };
 
-    // tiny spy util (no sinon)
+    const resolvedUtilsLoggerId = resolveFromSUT('../../utils/logger');
+
+    const loadWithMocks = (mocks) => {
+    // Clear caches so our mocks take effect
+    [loggerServicePath, resolvedUtilsLoggerId].forEach((id) => delete require.cache[id]);
+
+    // Install mocks under the exact resolved IDs
+    require.cache[resolvedUtilsLoggerId] = { exports: mocks.utilsLogger };
+
+    // Load SUT: since module.exports = LoggerService, this returns the class directly
+    return require(loggerServicePath);
+    };
+
+    // tiny spy (no sinon)
     const makeSpy = () => {
-        const calls = [];
-        const fn = (...args) => { calls.push(args); };
-        fn.calls = calls;
-        return fn;
+    const calls = [];
+    const fn = (...args) => { calls.push(args); };
+    fn.calls = calls;
+    return fn;
     };
 
     class FakeZipService extends EventEmitter {}
-
-    const sampleEvent = {
-        userId: 'user-123',
-        folderId: 'folder-456',
-        fileCount: 7,
-        timestamp: '2025-09-30T01:23:45.000Z',
-    };
-
-    // ensure async listeners have a chance to run (even though LoggerService uses sync handler)
     const tick = () => new Promise((r) => setImmediate(r));
 
+    describe('LoggerService', () => {
     it('logs a formatted message when ZIP_CREATED is emitted', async () => {
         const writeLogSpy = makeSpy();
 
@@ -52,22 +51,25 @@ describe('LoggerService', () => {
         });
 
         const zipService = new FakeZipService();
-
         // construct service (attaches listener)
         // eslint-disable-next-line no-new
         new LoggerService({ zipService });
 
-        // emit event
-        zipService.emit('ZIP_CREATED', sampleEvent);
+        const event = {
+        userId: 'user-123',
+        folderId: 'folder-456',
+        fileCount: 7,
+        timestamp: '2025-09-30T01:23:45.000Z',
+        };
+
+        zipService.emit('ZIP_CREATED', event);
         await tick();
 
-        // assert writeLog called exactly once
         expect(writeLogSpy.calls).to.have.length(1);
-
         const [channel, message] = writeLogSpy.calls[0];
         expect(channel).to.equal('logger');
         expect(message).to.equal(
-        `[ZIP_CREATED] user=${sampleEvent.userId} folder=${sampleEvent.folderId} files=${sampleEvent.fileCount} createdAt=${sampleEvent.timestamp}`
+        `[ZIP_CREATED] user=${event.userId} folder=${event.folderId} files=${event.fileCount} createdAt=${event.timestamp}`
         );
     });
 
@@ -79,10 +81,9 @@ describe('LoggerService', () => {
         });
 
         // eslint-disable-next-line no-new
-        new LoggerService({}); // no zipService provided
-
-        // no events to emit; ensure no calls were made
+        new LoggerService({});
         await tick();
+
         expect(writeLogSpy.calls).to.have.length(0);
     });
 });

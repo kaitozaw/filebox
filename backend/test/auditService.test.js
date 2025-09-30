@@ -1,66 +1,130 @@
 // test/auditService.test.js
 const { expect } = require('chai');
-const EventEmitter = require('events');
-const fs = require('fs');
+const { EventEmitter } = require('events');
 const path = require('path');
-const AuditService = require('../services/AuditService');
 
-// Mock model
-class FakeAuditLogModel {
-    constructor() {
-        this.entries = [];
-    }
+describe('AuditService', () => {
+    const projectRoot = path.resolve(__dirname, '..'); // adjust if your tests live elsewhere
+    const auditServicePath = path.resolve(projectRoot, 'servies/observer/AuditService.js'); 
+    const loggerPath = path.resolve(path.dirname(auditServicePath), '../../utils/logger');
+    const auditLogModelPath = path.resolve(path.dirname(auditServicePath), '../../models/AuditLog');
 
-    async create(data) {
-        this.entries.push(data);
-        return data;
-    }
-    }
+    // Helpers to (re)load module-under-test with fresh mocks each test
+    const loadWithMocks = (mocks) => {
+        // Wipe any previous cached modules so our stubs take effect
+        delete require.cache[auditServicePath];
+        delete require.cache[loggerPath];
+        delete require.cache[auditLogModelPath];
 
-    describe('AuditService', () => {
-    const logDir = path.resolve(__dirname, '../logs');
-    const logFile = path.join(logDir, 'audit.log');
-    let zipService;
-    let auditLogModel;
+        // Install mocks into require cache
+        require.cache[loggerPath] = { exports: mocks.logger };
+        require.cache[auditLogModelPath] = { exports: mocks.auditLogModel };
 
-    before(() => {
-        if (!fs.existsSync(logDir)) {
-        fs.mkdirSync(logDir);
-        }
+        // Now require the module-under-test, which will see our mocks
+        return require(auditServicePath);
+    };
+
+    // Simple spy recorder without external libs
+    const makeSpy = () => {
+        const calls = [];
+        const fn = (...args) => { calls.push(args); };
+        fn.calls = calls;
+        return fn;
+    };
+
+    class FakeZipService extends EventEmitter {}
+
+    const sampleEvent = {
+        userId: 'user-123',
+        folderId: 'folder-456',
+        fileCount: 7,
+        timestamp: '2025-09-30T01:23:45.000Z',
+    };
+
+    // Utility: wait for async handlers to run after emit
+    const tick = () => new Promise((r) => setImmediate(r));
+
+    it('registers ZIP_CREATED listener and writes audit record + log on success', async () => {
+        // Arrange: mocks
+        const writeLogSpy = makeSpy();
+        const createSpy = async (doc) => { createSpy.calls.push([doc]); };
+        createSpy.calls = [];
+
+        const AuditService = loadWithMocks({
+        logger: { writeLog: writeLogSpy },
+        auditLogModel: { create: createSpy },
+        });
+
+        const zipService = new FakeZipService();
+
+        // Act: construct service (attaches listener), then emit event
+        // eslint-disable-next-line no-new
+        new AuditService({ zipService });
+        zipService.emit('ZIP_CREATED', sampleEvent);
+        await tick();
+
+        // Assert: AuditLog.create called with expected document
+        expect(createSpy.calls).to.have.length(1);
+        expect(createSpy.calls[0][0]).to.deep.equal({
+        user: sampleEvent.userId,
+        folder: sampleEvent.folderId,
+        fileCount: sampleEvent.fileCount,
+        createdAt: sampleEvent.timestamp,
+        });
+
+        // Assert: writeLog called once with formatted message
+        expect(writeLogSpy.calls).to.have.length(1);
+        const [channel, message] = writeLogSpy.calls[0];
+        expect(channel).to.equal('audit');
+        expect(message).to.equal(
+        `[ZIP_CREATED] user=${sampleEvent.userId} folder=${sampleEvent.folderId} files=${sampleEvent.fileCount} createdAt=${sampleEvent.timestamp} action=auditLog`
+        );
     });
 
-    beforeEach(() => {
-        zipService = new EventEmitter();
-        auditLogModel = new FakeAuditLogModel();
-        if (fs.existsSync(logFile)) fs.unlinkSync(logFile);
+    it('logs a failure message if AuditLog.create throws', async () => {
+        // Arrange: failing create
+        const writeLogSpy = makeSpy();
+        const error = new Error('DB write failed');
+        const createFail = async () => { throw error; };
+
+        const AuditService = loadWithMocks({
+        logger: { writeLog: writeLogSpy },
+        auditLogModel: { create: createFail },
+        });
+
+        const zipService = new FakeZipService();
+
+        // Act
+        // eslint-disable-next-line no-new
+        new AuditService({ zipService });
+        zipService.emit('ZIP_CREATED', sampleEvent);
+        await tick();
+
+        // Assert: writeLog called with failure note
+        expect(writeLogSpy.calls).to.have.length(1);
+        const [channel, message] = writeLogSpy.calls[0];
+        expect(channel).to.equal('audit');
+        expect(message).to.equal(`Failed to record audit log: ${error.message}`);
     });
 
-    it('should write to audit log and create audit entry on ZIP_CREATED event', (done) => {
-        new AuditService({ zipService, auditLogModel });
+    it('does nothing when constructed without a zipService', async () => {
+        // Arrange: spies should never be called since no listener is attached
+        const writeLogSpy = makeSpy();
+        const createSpy = async () => { createSpy.calls.push([]); };
+        createSpy.calls = [];
 
-        const event = {
-        userId: 'user001',
-        folderId: 'folderABC',
-        fileCount: 2,
-        timestamp: new Date().toISOString(),
-        };
+        const AuditService = loadWithMocks({
+        logger: { writeLog: writeLogSpy },
+        auditLogModel: { create: createSpy },
+        });
 
-        zipService.emit('ZIP_CREATED', event);
+        // Act
+        // eslint-disable-next-line no-new
+        new AuditService({}); // no zipService provided
+        // (No event to emit)
 
-        setTimeout(() => {
-        // Audit log written
-        expect(fs.existsSync(logFile)).to.be.true;
-        const contents = fs.readFileSync(logFile, 'utf8');
-        expect(contents).to.include(`User ${event.userId}`);
-        expect(contents).to.include(`Folder ${event.folderId}`);
-
-        // Audit entry created
-        expect(auditLogModel.entries.length).to.equal(1);
-        const entry = auditLogModel.entries[0];
-        expect(entry.user).to.equal(event.userId);
-        expect(entry.folder).to.equal(event.folderId);
-        expect(entry.fileCount).to.equal(event.fileCount);
-        done();
-        }, 50);
+        // Assert
+        expect(createSpy.calls).to.have.length(0);
+        expect(writeLogSpy.calls).to.have.length(0);
     });
 });

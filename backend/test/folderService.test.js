@@ -8,12 +8,13 @@ describe('FolderService', () => {
     let FolderService;       // SUT, loaded via proxyquire with mocked Folder
     let service;
 
-    // Real error classes from your project so we can assert instance types
+    // You can keep this import if you also want to check .name values match,
+    // but avoid using `instanceOf` due to duplicate module instances.
     const {
         ValidationError,
         ForbiddenError,
         NotFoundError,
-    } = require('../utils/errors'); // <-- adjust path to your utils/errors
+    } = require('../utils/errors'); // <-- adjust path to your utils/errors if needed
 
     const now = new Date();
     const mkDoc = ({ id = 'folder-1', name = 'Folder A', user = 'user-123', createdAt = now } = {}) => ({
@@ -85,7 +86,7 @@ describe('FolderService', () => {
             await service.getFolderById('missing');
             expect.fail('Expected NotFoundError to be thrown');
         } catch (err) {
-            expect(err).to.be.instanceOf(NotFoundError);
+            expect(err.name).to.equal('NotFoundError');
             expect(err.message).to.match(/Folder not found/i);
         }
         });
@@ -97,7 +98,7 @@ describe('FolderService', () => {
             await service.create('user-123', { });
             expect.fail('Expected ValidationError to be thrown');
         } catch (err) {
-            expect(err).to.be.instanceOf(ValidationError);
+            expect(err.name).to.equal('ValidationError');
             expect(err.message).to.match(/name is required/i);
         }
         });
@@ -124,7 +125,7 @@ describe('FolderService', () => {
             await service.update('user-123', 'folder-1', { });
             expect.fail('Expected ValidationError to be thrown');
         } catch (err) {
-            expect(err).to.be.instanceOf(ValidationError);
+            expect(err.name).to.equal('ValidationError');
             expect(err.message).to.match(/name is required/i);
         }
         });
@@ -136,7 +137,8 @@ describe('FolderService', () => {
             await service.update('user-123', 'missing', { name: 'Renamed' });
             expect.fail('Expected NotFoundError to be thrown');
         } catch (err) {
-            expect(err).to.be.instanceOf(NotFoundError);
+            expect(err.name).to.equal('NotFoundError');
+            expect(err.message).to.match(/Folder not found/i);
         }
         });
 
@@ -148,7 +150,7 @@ describe('FolderService', () => {
             await service.update('user-123', 'folder-1', { name: 'Renamed' });
             expect.fail('Expected ForbiddenError to be thrown');
         } catch (err) {
-            expect(err).to.be.instanceOf(ForbiddenError);
+            expect(err.name).to.equal('ForbiddenError');
             expect(err.message).to.match(/Not authorized/i);
         }
         });
@@ -183,7 +185,8 @@ describe('FolderService', () => {
             await service.remove('user-123', 'missing');
             expect.fail('Expected NotFoundError to be thrown');
         } catch (err) {
-            expect(err).to.be.instanceOf(NotFoundError);
+            expect(err.name).to.equal('NotFoundError');
+            expect(err.message).to.match(/Folder not found/i);
         }
         });
 
@@ -195,7 +198,8 @@ describe('FolderService', () => {
             await service.remove('user-123', 'folder-1');
             expect.fail('Expected ForbiddenError to be thrown');
         } catch (err) {
-            expect(err).to.be.instanceOf(ForbiddenError);
+            expect(err.name).to.equal('ForbiddenError');
+            expect(err.message).to.match(/Not authorized/i);
         }
         });
 

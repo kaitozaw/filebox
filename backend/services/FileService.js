@@ -27,7 +27,15 @@ class FileService {
         const folder = await Folder.findById(folderId);
         if (!folder) throw new NotFoundError('Folder not found');
         if (folder.user.toString() !== userId) throw new ForbiddenError('Not authorized to view this folder');
-        return File.find({ folder: folder._id }).sort({ createdAt: -1 });
+        return File.find({
+            user: userId,
+            folder: folder._id,
+            $or: [
+              { deletedAt: { $exists: false } },
+              { deletedAt: null }
+            ]
+          })
+          .sort({ createdAt: -1 });
     }
 
     async download(userId, fileId) {

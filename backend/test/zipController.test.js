@@ -1,4 +1,3 @@
-// test/zipController.test.js
 const { expect } = require('chai');
 const { EventEmitter } = require('events');
 const path = require('path');
@@ -8,7 +7,6 @@ describe('ZipController', () => {
     const projectRoot = path.resolve(__dirname, '..');
     const zipControllerPath = path.resolve(projectRoot, 'controllers/ZipController.js');
 
-    // Resolve module IDs EXACTLY as the SUT will
     const resolveFromSUT = (request) => {
         const basedir = path.dirname(zipControllerPath);
         return Module._resolveFilename(request, {
@@ -21,15 +19,13 @@ describe('ZipController', () => {
     const resolvedBaseControllerId   = resolveFromSUT('./BaseController');
     const resolvedContentDispId      = resolveFromSUT('content-disposition');
 
-    // Helper: wipe caches and load SUT with injected mocks
     const loadWithMocks = (mocks) => {
         [zipControllerPath, resolvedBaseControllerId, resolvedContentDispId].forEach((id) => delete require.cache[id]);
         require.cache[resolvedBaseControllerId] = { exports: mocks.BaseControllerClass };
         require.cache[resolvedContentDispId]    = { exports: mocks.contentDisposition };
-        return require(zipControllerPath); // expects: module.exports = { ZipController }
+        return require(zipControllerPath);
     };
 
-    // Tiny spy (no sinon)
     const makeSpy = () => {
         const calls = [];
         const fn = (...args) => { calls.push(args); };
@@ -37,7 +33,6 @@ describe('ZipController', () => {
         return fn;
     };
 
-    // Fake stream for zip results
     class FakeReadableStream extends EventEmitter {
         constructor() {
         super();
@@ -49,7 +44,6 @@ describe('ZipController', () => {
         }
     }
 
-    // Fake Express-like response
     const makeFakeRes = () => {
         const res = new EventEmitter();
         res.headers = {};
@@ -66,7 +60,7 @@ describe('ZipController', () => {
         res.jsonPayloads = [];
         res.json = (obj) => {
         res.jsonPayloads.push(obj);
-        res.headersSent = true; // simulate Express behavior after sending body
+        res.headersSent = true;
         return res;
         };
 
@@ -95,7 +89,7 @@ describe('ZipController', () => {
         };
     };
 
-    it('zipFolder: sets headers and pipes stream to response (happy path)', async () => {
+    it('zipFolder: should set headers and pipe stream to response', async () => {
         const contentDispositionSpy = makeSpy();
         const contentDisposition = (filename) => {
         contentDispositionSpy(filename);
@@ -141,7 +135,7 @@ describe('ZipController', () => {
         expect(handleErrorSpy.calls).to.have.length(0);
     });
 
-    it('zipFolder: parses files query into fileIds', async () => {
+    it('zipFolder: should parse files query into fileIds', async () => {
         const contentDisposition = () => 'attachment; filename="x.zip"';
         class FakeBaseController { handleError() {} }
 
@@ -165,7 +159,7 @@ describe('ZipController', () => {
         expect(seenArgs[0].fileIds).to.deep.equal(['a', 'b', 'c']);
     });
 
-    it('zipFolder: stream error before headers sent -> returns 500 json', async () => {
+    it('zipFolder: should stream error before headers sent -> returns 500 json', async () => {
         const contentDisposition = () => 'attachment; filename="a.zip"';
 
         const handleErrorSpy = makeSpy();
@@ -183,14 +177,11 @@ describe('ZipController', () => {
         const req = sampleReq();
         const res = makeFakeRes();
 
-        // First, let the controller attach the error handler and start piping
         await controller.zipFolder(req, res);
 
-        // Now emit the error while headersSent is still false in our fake res
         const err = new Error('boom');
         zipResult.stream.emit('error', err);
 
-        // Assertions
         expect(res.statusCode).to.equal(500);
         expect(res.jsonPayloads).to.have.length(1);
         expect(res.jsonPayloads[0]).to.deep.equal({ error: true, message: 'ZIP stream failed' });
@@ -198,7 +189,7 @@ describe('ZipController', () => {
         expect(handleErrorSpy.calls).to.have.length(0);
     });
 
-    it('zipFolder: stream error after headers sent -> res.destroy(err)', async () => {
+    it('zipFolder: should stream error after headers sent -> res.destroy(err)', async () => {
         const contentDisposition = () => 'attachment; filename="b.zip"';
         class FakeBaseController { handleError() {} }
 
@@ -214,7 +205,6 @@ describe('ZipController', () => {
         const req = sampleReq();
         const res = makeFakeRes();
 
-        // Simulate that response has already started
         res.headersSent = true;
 
         await controller.zipFolder(req, res);

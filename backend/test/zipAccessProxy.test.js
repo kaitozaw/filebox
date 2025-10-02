@@ -1,4 +1,3 @@
-// test/zipServiceProxy.test.js
 const { expect } = require('chai');
 const path = require('path');
 const Module = require('module');
@@ -7,7 +6,6 @@ const Module = require('module');
 const projectRoot = path.resolve(__dirname, '..');
 const zipServiceProxyPath = path.resolve(projectRoot, 'services/zip/ZipServiceProxy.js');
 
-// Resolve dependency IDs exactly as ZipServiceProxy.js will
 const resolveFromSUT = (request) => {
     const basedir = path.dirname(zipServiceProxyPath);
     return Module._resolveFilename(request, {
@@ -19,15 +17,12 @@ const resolveFromSUT = (request) => {
 
     const resolvedErrorsId = resolveFromSUT('../../utils/errors');
 
-    // Fresh-load SUT with mocked ../../utils/errors
     const loadWithMocks = (errorsExport) => {
     [zipServiceProxyPath, resolvedErrorsId].forEach((id) => delete require.cache[id]);
     require.cache[resolvedErrorsId] = { exports: errorsExport };
-    // IMPORTANT: default export (CommonJS), so this returns the class directly
     return require(zipServiceProxyPath);
     };
 
-    // Tiny spy helper (no sinon)
     const makeSpy = () => {
     const calls = [];
     const fn = (...args) => { calls.push(args); };
@@ -35,14 +30,12 @@ const resolveFromSUT = (request) => {
     return fn;
     };
 
-    // Fake error classes (so instanceof checks work)
     class ValidationError extends Error {}
     class ForbiddenError extends Error {}
     class NotFoundError extends Error {}
     class TooManyRequestsError extends Error {}
     const Errors = { ValidationError, ForbiddenError, NotFoundError, TooManyRequestsError };
 
-    // Sample inputs
     const userId = 'user-1';
     const folderId = 'folder-1';
     const baseFolder = { _id: folderId, user: userId, name: 'My Folder' };
@@ -72,8 +65,8 @@ const resolveFromSUT = (request) => {
     return { folderService, fileService, zipService, quotaService };
     };
 
-    describe('ZipServiceProxy', () => {
-    it('throws NotFoundError when folder does not exist', async () => {
+    describe('ZipServiceProxy tests', () => {
+    it('should throw NotFoundError when folder does not exist', async () => {
         const ZipServiceProxy = loadWithMocks(Errors);
         const services = makeSvcStubs({
         folderService: { getFolderById: async () => null },
@@ -89,7 +82,7 @@ const resolveFromSUT = (request) => {
         }
     });
 
-    it('throws ForbiddenError when folder user does not match', async () => {
+    it('should throw ForbiddenError when folder user does not match', async () => {
         const ZipServiceProxy = loadWithMocks(Errors);
         const services = makeSvcStubs({
         folderService: { getFolderById: async () => ({ ...baseFolder, user: 'another-user' }) },
@@ -105,7 +98,7 @@ const resolveFromSUT = (request) => {
         }
     });
 
-    it('throws TooManyRequestsError when over quota', async () => {
+    it('should throw TooManyRequestsError when over quota', async () => {
         const ZipServiceProxy = loadWithMocks(Errors);
         const services = makeSvcStubs({
         quotaService: { checkQuota: async () => ({ overQuota: true }) },
@@ -121,7 +114,7 @@ const resolveFromSUT = (request) => {
         }
     });
 
-    it('throws ValidationError when no fileIds are provided', async () => {
+    it('should throw ValidationError when no fileIds are provided', async () => {
         const ZipServiceProxy = loadWithMocks(Errors);
         const services = makeSvcStubs();
         const proxy = new ZipServiceProxy(services);
@@ -148,7 +141,7 @@ const resolveFromSUT = (request) => {
         ]);
     });
 
-    it('throws ValidationError when more than 5 fileIds are provided', async () => {
+    it('should throw ValidationError when more than 5 fileIds are provided', async () => {
         const ZipServiceProxy = loadWithMocks(Errors);
         const services = makeSvcStubs();
         const proxy = new ZipServiceProxy(services);
@@ -162,7 +155,7 @@ const resolveFromSUT = (request) => {
         }
     });
 
-    it('filters files by selected fileIds (string compare on _id)', async () => {
+    it('should filter files by selected fileIds (string compare on _id)', async () => {
         const ZipServiceProxy = loadWithMocks(Errors);
 
         const filesInFolder = [
@@ -202,7 +195,7 @@ const resolveFromSUT = (request) => {
         expect(result).to.deep.equal({ ok: true, files: passedFiles });
     });
 
-    it('forwards to zipService.zipFolder with { folder, files } and returns its response (happy path)', async () => {
+    it('should forward to zipService.zipFolder with { folder, files } and returns its response', async () => {
         const ZipServiceProxy = loadWithMocks(Errors);
 
         const filesInFolder = [{ _id: 'x', name: 'x.txt' }];

@@ -19,18 +19,14 @@ const resolveFromSUT = (request) => {
     const resolvedAuditLogId = resolveFromSUT('../../models/AuditLog');
 
     const loadWithMocks = (mocks) => {
-    // clear caches
     [auditServicePath, resolvedLoggerId, resolvedAuditLogId].forEach((id) => delete require.cache[id]);
 
-    // install mocks under the exact IDs AuditService will require
     require.cache[resolvedLoggerId]   = { exports: mocks.logger };
     require.cache[resolvedAuditLogId] = { exports: mocks.auditLogModel };
 
-    // load SUT
     return require(auditServicePath);
     };
 
-    // tiny spy
     const makeSpy = () => {
     const calls = [];
     const fn = (...args) => { calls.push(args); };
@@ -60,11 +56,10 @@ const resolveFromSUT = (request) => {
         });
 
         const zipService = new FakeZipService();
-        // eslint-disable-next-line no-new
         new AuditService({ zipService });
 
         zipService.emit('ZIP_CREATED', sampleEvent);
-        await tick(); // allow async handler to run
+        await tick();
 
         expect(createSpy.calls).to.have.length(1);
         expect(createSpy.calls[0][0]).to.deep.equal({
@@ -93,7 +88,6 @@ const resolveFromSUT = (request) => {
         });
 
         const zipService = new FakeZipService();
-        // eslint-disable-next-line no-new
         new AuditService({ zipService });
 
         zipService.emit('ZIP_CREATED', sampleEvent);
@@ -115,7 +109,6 @@ const resolveFromSUT = (request) => {
         auditLogModel: { create: createSpy },
         });
 
-        // eslint-disable-next-line no-new
         new AuditService({});
         await tick();
 

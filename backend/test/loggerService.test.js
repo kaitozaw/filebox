@@ -1,4 +1,3 @@
-// test/LoggerService.test.js
 const { expect } = require('chai');
 const { EventEmitter } = require('events');
 const path = require('path');
@@ -8,7 +7,6 @@ const Module = require('module');
 const projectRoot = path.resolve(__dirname, '..');
 const loggerServicePath = path.resolve(projectRoot, 'services/observer/LoggerService.js');
 
-// Resolve dependency IDs exactly as LoggerService.js will
 const resolveFromSUT = (request) => {
     const basedir = path.dirname(loggerServicePath);
     return Module._resolveFilename(request, {
@@ -21,17 +19,13 @@ const resolveFromSUT = (request) => {
     const resolvedUtilsLoggerId = resolveFromSUT('../../utils/logger');
 
     const loadWithMocks = (mocks) => {
-    // Clear caches so our mocks take effect
     [loggerServicePath, resolvedUtilsLoggerId].forEach((id) => delete require.cache[id]);
 
-    // Install mocks under the exact resolved IDs
     require.cache[resolvedUtilsLoggerId] = { exports: mocks.utilsLogger };
 
-    // Load SUT: since module.exports = LoggerService, this returns the class directly
     return require(loggerServicePath);
     };
 
-    // tiny spy (no sinon)
     const makeSpy = () => {
     const calls = [];
     const fn = (...args) => { calls.push(args); };
@@ -43,7 +37,7 @@ const resolveFromSUT = (request) => {
     const tick = () => new Promise((r) => setImmediate(r));
 
     describe('LoggerService', () => {
-    it('logs a formatted message when ZIP_CREATED is emitted', async () => {
+    it('should log a formatted message when ZIP_CREATED is emitted', async () => {
         const writeLogSpy = makeSpy();
 
         const LoggerService = loadWithMocks({
@@ -51,8 +45,6 @@ const resolveFromSUT = (request) => {
         });
 
         const zipService = new FakeZipService();
-        // construct service (attaches listener)
-        // eslint-disable-next-line no-new
         new LoggerService({ zipService });
 
         const event = {
@@ -73,14 +65,13 @@ const resolveFromSUT = (request) => {
         );
     });
 
-    it('does nothing when constructed without a zipService', async () => {
+    it('should do nothing when constructed without a zipService', async () => {
         const writeLogSpy = makeSpy();
 
         const LoggerService = loadWithMocks({
         utilsLogger: { writeLog: writeLogSpy },
         });
 
-        // eslint-disable-next-line no-new
         new LoggerService({});
         await tick();
 

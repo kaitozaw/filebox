@@ -7,13 +7,13 @@ describe('ImagePreviewer (unit)', () => {
   const fakeStorage = { stream: sinon.stub() };
   const sut = new ImagePreviewer({ storage: fakeStorage });
 
-  it('supports image/*', () => {
+  it('should support image/*', () => {
     expect(sut.supports('image/png')).to.equal(true);
     expect(sut.supports('image/jpeg')).to.equal(true);
     expect(sut.supports('application/pdf')).to.equal(false);
   });
 
-  it('render() returns a readable stream (headers optional)', async () => {
+  it('render() should return a readable stream', async () => {
     fakeStorage.stream.returns({ stream: Readable.from(Buffer.from('PNGDATA')) });
 
     const file = { filePath: '/tmp/a.png', mimetype: 'image/png', name: 'a.png' };

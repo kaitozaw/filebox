@@ -1,23 +1,18 @@
-// test/folderController.test.js
 const { expect } = require('chai');
-// No sinon import
 
-// Adjust the path to where your controller is exported from
 const { FolderController } = require('../controllers/FolderController');
 
-describe('FolderController (Mocha + Chai only)', () => {
+describe('FolderController', () => {
     let folderService;
     let controller;
     let req;
     let res;
 
-    // simple call recorder for controller helpers
     let callLog;
 
     beforeEach(() => {
         callLog = [];
 
-        // Fake service; each method will be assigned per-test
         folderService = {
         list: async () => { throw new Error('unassigned'); },
         create: async () => { throw new Error('unassigned'); },
@@ -27,7 +22,6 @@ describe('FolderController (Mocha + Chai only)', () => {
 
         controller = new FolderController({ folderService });
 
-        // Patch BaseController helpers to record calls
         controller.ok = (response, payload) => {
         callLog.push({ method: 'ok', response, payload });
         return payload;
@@ -41,17 +35,16 @@ describe('FolderController (Mocha + Chai only)', () => {
         return error;
         };
 
-        // Minimal req/res doubles
         req = {
         user: { id: 'user-123' },
         params: { id: 'folder-456' },
         body: { name: 'New Folder' },
         };
-        res = {}; // just passed through
+        res = {};
     });
 
     describe('getFolders', () => {
-        it('returns ok with list results on success', async () => {
+        it('should return ok with list results on success', async () => {
         const listResult = [{ id: '1', name: 'A' }];
         let receivedArgs;
 
@@ -70,7 +63,7 @@ describe('FolderController (Mocha + Chai only)', () => {
         expect(callLog[0].payload).to.equal(listResult);
         });
 
-        it('calls handleError when service throws', async () => {
+        it('should call handleError when service throws', async () => {
         const err = new Error('boom');
         folderService.list = async () => { throw err; };
 
@@ -84,7 +77,7 @@ describe('FolderController (Mocha + Chai only)', () => {
     });
 
     describe('createFolder', () => {
-        it('returns created with new folder on success', async () => {
+        it('should return created with new folder on success', async () => {
         const createdFolder = { id: '2', name: 'New Folder' };
         let receivedArgs;
 
@@ -103,7 +96,7 @@ describe('FolderController (Mocha + Chai only)', () => {
         expect(callLog[0].payload).to.equal(createdFolder);
         });
 
-        it('calls handleError when service throws', async () => {
+        it('should call handleError when service throws', async () => {
         const err = new Error('fail-create');
         folderService.create = async () => { throw err; };
 
@@ -116,7 +109,7 @@ describe('FolderController (Mocha + Chai only)', () => {
     });
 
     describe('updateFolder', () => {
-        it('returns ok with updated folder on success', async () => {
+        it('should return ok with updated folder on success', async () => {
         const updated = { id: 'folder-456', name: 'Renamed' };
         let receivedArgs;
         req.body = { name: 'Renamed' };
@@ -135,7 +128,7 @@ describe('FolderController (Mocha + Chai only)', () => {
         expect(callLog[0].payload).to.equal(updated);
         });
 
-        it('calls handleError when service throws', async () => {
+        it('should call handleError when service throws', async () => {
         const err = new Error('fail-update');
         folderService.update = async () => { throw err; };
 
@@ -148,8 +141,8 @@ describe('FolderController (Mocha + Chai only)', () => {
     });
 
     describe('deleteFolder', () => {
-        it('returns ok with delete result on success', async () => {
-        const removed = { success: true };
+        it('should return ok with delete result on success', async () => {
+        const removed = { message: 'Folder deleted successfully' };
         let receivedArgs;
 
         folderService.remove = async (userId, folderId) => {
@@ -166,7 +159,7 @@ describe('FolderController (Mocha + Chai only)', () => {
         expect(callLog[0].payload).to.equal(removed);
         });
 
-        it('calls handleError when service throws', async () => {
+        it('should call handleError when service throws', async () => {
         const err = new Error('fail-remove');
         folderService.remove = async () => { throw err; };
 

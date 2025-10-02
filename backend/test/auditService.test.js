@@ -1,14 +1,11 @@
-// test/auditService.test.js
 const { expect } = require('chai');
 const { EventEmitter } = require('events');
 const path = require('path');
 const Module = require('module');
 
-// Point this to your real file:
 const projectRoot = path.resolve(__dirname, '..');
 const auditServicePath = path.resolve(projectRoot, 'services/observer/AuditService.js');
 
-// helper: resolve module IDs exactly as seen by AuditService.js
 const resolveFromSUT = (request) => {
     const basedir = path.dirname(auditServicePath);
     return Module._resolveFilename(request, {

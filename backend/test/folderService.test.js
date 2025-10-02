@@ -1,20 +1,17 @@
-// test/folderService.test.js
 const { expect } = require('chai');
 const sinon = require('sinon');
 const proxyquire = require('proxyquire').noCallThru();
 
 describe('FolderService', () => {
-    let FolderMock;          // Mocked Folder model
-    let FolderService;       // SUT, loaded via proxyquire with mocked Folder
+    let FolderMock;
+    let FolderService;
     let service;
 
-    // You can keep this import if you also want to check .name values match,
-    // but avoid using `instanceOf` due to duplicate module instances.
     const {
         ValidationError,
         ForbiddenError,
         NotFoundError,
-    } = require('../utils/errors'); // <-- adjust path to your utils/errors if needed
+    } = require('../utils/errors'); 
 
     const now = new Date();
     const mkDoc = ({ id = 'folder-1', name = 'Folder A', user = 'user-123', createdAt = now } = {}) => ({
@@ -27,16 +24,14 @@ describe('FolderService', () => {
     });
 
     beforeEach(() => {
-        // Create fresh stubs for each test
         FolderMock = {
         find: sinon.stub(),
         findById: sinon.stub(),
         create: sinon.stub(),
         };
 
-        // Load FolderService with FolderMock injected
         FolderService = proxyquire('../services/FolderService', {
-        '../models/Folder': FolderMock, // <-- adjust if your path is different
+        '../models/Folder': FolderMock,
         });
 
         service = new FolderService();
@@ -47,13 +42,12 @@ describe('FolderService', () => {
     });
 
     describe('list', () => {
-        it('returns mapped folders in reverse chronological order', async () => {
+        it('should return mapped folders in reverse chronological order', async () => {
         const docs = [
             mkDoc({ id: '2', name: 'B', createdAt: new Date('2024-12-31') }),
             mkDoc({ id: '1', name: 'A', createdAt: new Date('2024-01-01') }),
         ];
 
-        // Mock the chained query: Folder.find(...).sort({ createdAt: -1 })
         const sortStub = sinon.stub().resolves(docs);
         FolderMock.find.returns({ sort: sortStub });
 
@@ -69,7 +63,7 @@ describe('FolderService', () => {
     });
 
     describe('getFolderById', () => {
-        it('returns folder when found', async () => {
+        it('should return folder when found', async () => {
         const doc = mkDoc({ id: 'folder-9' });
         FolderMock.findById.resolves(doc);
 
@@ -79,7 +73,7 @@ describe('FolderService', () => {
         expect(out).to.equal(doc);
         });
 
-        it('throws NotFoundError when not found', async () => {
+        it('should throw NotFoundError when not found', async () => {
         FolderMock.findById.resolves(null);
 
         try {
@@ -93,7 +87,7 @@ describe('FolderService', () => {
     });
 
     describe('create', () => {
-        it('throws ValidationError when name is missing', async () => {
+        it('should throw ValidationError when file name is missing', async () => {
         try {
             await service.create('user-123', { });
             expect.fail('Expected ValidationError to be thrown');
@@ -103,7 +97,7 @@ describe('FolderService', () => {
         }
         });
 
-        it('creates and returns mapped folder', async () => {
+        it('should create and return mapped folder', async () => {
         const created = mkDoc({ id: 'new-1', name: 'New Folder', user: 'user-123' });
         FolderMock.create.resolves(created);
 
@@ -120,7 +114,7 @@ describe('FolderService', () => {
     });
 
     describe('update', () => {
-        it('throws ValidationError when name is missing', async () => {
+        it('should throw ValidationError when folder name is missing', async () => {
         try {
             await service.update('user-123', 'folder-1', { });
             expect.fail('Expected ValidationError to be thrown');
@@ -130,7 +124,7 @@ describe('FolderService', () => {
         }
         });
 
-        it('throws NotFoundError when folder is missing', async () => {
+        it('should throw NotFoundError when folder is not found', async () => {
         FolderMock.findById.resolves(null);
 
         try {
@@ -142,7 +136,7 @@ describe('FolderService', () => {
         }
         });
 
-        it('throws ForbiddenError for non-owner', async () => {
+        it('should throw ForbiddenError for non-owner', async () => {
         const doc = mkDoc({ user: 'other-user' });
         FolderMock.findById.resolves(doc);
 
@@ -155,11 +149,10 @@ describe('FolderService', () => {
         }
         });
 
-        it('updates and returns mapped folder for owner', async () => {
+        it('should update and return mapped folder for owner', async () => {
         const doc = mkDoc({ id: 'folder-1', name: 'Old', user: 'user-123' });
         const saved = mkDoc({ id: 'folder-1', name: 'Renamed', user: 'user-123' });
 
-        // simulate save() mutating and resolving to updated doc
         doc.save.resolves(saved);
         FolderMock.findById.resolves(doc);
 
@@ -178,7 +171,7 @@ describe('FolderService', () => {
     });
 
     describe('remove', () => {
-        it('throws NotFoundError when folder is missing', async () => {
+        it('should throw NotFoundError when folder is missing', async () => {
         FolderMock.findById.resolves(null);
 
         try {
@@ -190,7 +183,7 @@ describe('FolderService', () => {
         }
         });
 
-        it('throws ForbiddenError for non-owner', async () => {
+        it('should throw ForbiddenError for non-owner', async () => {
         const doc = mkDoc({ user: 'other-user' });
         FolderMock.findById.resolves(doc);
 
@@ -203,7 +196,7 @@ describe('FolderService', () => {
         }
         });
 
-        it('deletes and returns confirmation for owner', async () => {
+        it('should delete and return confirmation for owner', async () => {
         const doc = mkDoc({ id: 'folder-1', user: 'user-123' });
         FolderMock.findById.resolves(doc);
 

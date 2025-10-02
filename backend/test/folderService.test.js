@@ -87,7 +87,7 @@ describe('FolderService tests', () => {
     });
 
     describe('create', () => {
-        it('should throw ValidationError when file name is missing', async () => {
+        it('should throw ValidationError when folder name is missing', async () => {
         try {
             await service.create('user-123', { });
             expect.fail('Expected ValidationError to be thrown');

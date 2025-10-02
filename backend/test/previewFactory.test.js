@@ -4,7 +4,7 @@ import ImagePreviewer from '../services/preview/renderers/ImagePreviewer.js';
 import PdfPreviewer from '../services/preview/renderers/PdfPreviewer.js';
 import FallbackPreviewer from '../services/preview/renderers/FallbackPreviewer.js';
 
-describe('PreviewFactory (unit)', () => {
+describe('PreviewFactory tests', () => {
   const factory = new PreviewFactory({ storage: {} });
 
   it('image/* -> ImagePreviewer', () => {

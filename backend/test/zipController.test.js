@@ -3,7 +3,7 @@ const { EventEmitter } = require('events');
 const path = require('path');
 const Module = require('module');
 
-describe('ZipController', () => {
+describe('ZipController tests', () => {
     const projectRoot = path.resolve(__dirname, '..');
     const zipControllerPath = path.resolve(projectRoot, 'controllers/ZipController.js');
 

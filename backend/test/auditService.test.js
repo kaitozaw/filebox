@@ -37,7 +37,7 @@ const resolveFromSUT = (request) => {
     class FakeZipService extends EventEmitter {}
     const tick = () => new Promise((r) => setImmediate(r));
 
-    describe('AuditService', () => {
+    describe('AuditService tests', () => {
     const sampleEvent = {
         userId: 'user-123',
         folderId: 'folder-456',

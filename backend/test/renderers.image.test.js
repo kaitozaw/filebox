@@ -3,7 +3,7 @@ import sinon from 'sinon';
 import { Readable } from 'stream';
 import ImagePreviewer from '../services/preview/renderers/ImagePreviewer.js';
 
-describe('ImagePreviewer (unit)', () => {
+describe('ImagePreviewer tests', () => {
   const fakeStorage = { stream: sinon.stub() };
   const sut = new ImagePreviewer({ storage: fakeStorage });
 

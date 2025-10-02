@@ -3,7 +3,7 @@ import sinon from 'sinon';
 import { Readable } from 'stream';
 import PdfPreviewer from '../services/preview/renderers/PdfPreviewer.js';
 
-describe('PdfPreviewer (unit)', () => {
+describe('PdfPreviewer tests', () => {
   const fakeStorage = { stream: sinon.stub() };
   const sut = new PdfPreviewer({ storage: fakeStorage });
 

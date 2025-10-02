@@ -4,7 +4,7 @@ const sinon = require('sinon');
 
 const { RecentController } = require('../controllers/RecentController');
 
-describe('RecentController.getRecent test', () => {
+describe('RecentController.getRecent tests', () => {
   afterEach(() => {
     sinon.restore();
   });

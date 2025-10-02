@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import FallbackPreviewer from '../services/preview/renderers/FallbackPreviewer.js';
 
-describe('FallbackPreviewer (unit)', () => {
+describe('FallbackPreviewer test', () => {
   it('render() should result in 415 for unsupported types', async () => {
     const sut = new FallbackPreviewer();
     try {

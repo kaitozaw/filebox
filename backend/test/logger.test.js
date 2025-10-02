@@ -6,7 +6,7 @@ const { writeLog } = require('../utils/logger');
 
 const TEST_LOG_DIR = path.resolve(__dirname, 'tmp-logs');
 
-describe('logger.writeLog', () => {
+describe('logger.writeLog tests', () => {
     const serviceName = 'testService';
     const logFilePath = path.join(TEST_LOG_DIR, `${serviceName}.log`);
 

@@ -2,7 +2,7 @@ const { expect } = require('chai');
 
 const { FolderController } = require('../controllers/FolderController');
 
-describe('FolderController', () => {
+describe('FolderController tests', () => {
     let folderService;
     let controller;
     let req;

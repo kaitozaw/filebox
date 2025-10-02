@@ -36,7 +36,7 @@ const resolveFromSUT = (request) => {
     class FakeZipService extends EventEmitter {}
     const tick = () => new Promise((r) => setImmediate(r));
 
-    describe('LoggerService', () => {
+    describe('LoggerService tests', () => {
     it('should log a formatted message when ZIP_CREATED is emitted', async () => {
         const writeLogSpy = makeSpy();
 

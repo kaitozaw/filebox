@@ -36,7 +36,7 @@ const resolveFromSUT = (request) => {
 
     class FakeZipService extends EventEmitter {}
 
-    describe('QuotaService', () => {
+    describe('QuotaService tests', () => {
     const sampleEvent = {
         userId: 'user-123',
         folderId: 'folder-456',

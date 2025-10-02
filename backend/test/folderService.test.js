@@ -2,7 +2,7 @@ const { expect } = require('chai');
 const sinon = require('sinon');
 const proxyquire = require('proxyquire').noCallThru();
 
-describe('FolderService', () => {
+describe('FolderService tests', () => {
     let FolderMock;
     let FolderService;
     let service;

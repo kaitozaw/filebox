@@ -4,7 +4,7 @@ const { PassThrough } = require('stream');
 const path = require('path');
 const Module = require('module');
 
-describe('ZipService', () => {
+describe('ZipService tests', () => {
     const projectRoot = path.resolve(__dirname, '..');
     const zipServicePath = path.resolve(projectRoot, 'services/zip/ZipService.js');
 

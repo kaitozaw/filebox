@@ -5,7 +5,7 @@ const sinon = require('sinon');
 const File = require('../models/File');
 const RecentService = require('../services/RecentService');
 
-describe('RecentService.listByUser test', () => {
+describe('RecentService.listByUser tests', () => {
   afterEach(() => sinon.restore());
 
   it('should apply default limit = 20 when no limit is provided', async () => {

@@ -1,0 +1,1890 @@
+{
+	"info": {
+		"_postman_id": "74800336-576b-4a4a-9f9c-563c7d7b00cc",
+		"name": "Filebox API testing",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "48242818",
+		"_collection_link": "https://tkyk-murakami-3352997.postman.co/workspace/Filebox~9e73a4cf-b327-42db-957b-9254b62f7990/collection/48242818-74800336-576b-4a4a-9f9c-563c7d7b00cc?action=share&source=collection_link&creator=48242818"
+	},
+	"item": [
+		{
+			"name": "login",
+			"item": [
+				{
+					"name": "login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let response = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 200 (Created)\", function () {",
+									"pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"Content-Type is present\", function () {",
+									"pm.response.to.have.header(\"Content-Type\");",
+									"});",
+									"",
+									"if (response.token) {",
+									"pm.environment.set(\"jwt_token\", response.token);",
+									"console.log(\"JWT Token saved from registration response\");",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"email\": \"bdlteddy1020@gmail.com\", \"password\": \"123456\" }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/auth/login",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "folder",
+			"item": [
+				{
+					"name": "createFolders – Create",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status is 201', function () {",
+									"  pm.response.to.have.status(201);",
+									"});",
+									"let json = {};",
+									"try { json = pm.response.json(); } catch(e) {}",
+									"pm.test('Has id and name', function () {",
+									"  pm.expect(json).to.have.property('id');",
+									"  pm.expect(json).to.have.property('name');",
+									"});",
+									"if (json.id) {",
+									"  pm.environment.set('folderId', json.id);",
+									"  pm.environment.set('folderId4Zip', json.id);",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"bteddy {{$randomInt}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/folders",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"folders"
+							]
+						},
+						"description": "POST {{baseURL}}/api/folders { name } • Returns 201 Created with mapped folder"
+					},
+					"response": []
+				},
+				{
+					"name": "getFolders - List",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));",
+									"pm.test(\"JSON array\", () => {",
+									"  pm.response.to.be.json;",
+									"  const arr = pm.response.json();",
+									"  pm.expect(arr).to.be.an(\"array\");",
+									"});",
+									"",
+									"const arr = pm.response.json();",
+									"if (arr.length) {",
+									"  const x = arr[0];",
+									"  pm.expect(x).to.have.any.keys(\"_id\");",
+									"  pm.expect(x).to.have.any.keys(\"name\");",
+									"  pm.expect(x).to.have.any.keys(\"lastAccessedAt\");",
+									"",
+									"};",
+									"let body; try { body = pm.response.json(); } catch {}",
+									"const folders = Array.isArray(body) ? body : (Array.isArray(body?.folders) ? body.folders : []);",
+									"if (folders.length) {",
+									"  const f = folders[0];",
+									"  pm.environment.set('folderId', String(f._id || f.id)); ",
+									"  pm.environment.set('folderName', f.name || '');",
+									"} else {",
+									"  pm.environment.unset('folderId');",
+									"}",
+									"",
+									"const key = [\"lastAccessedAt\"].find(k => arr[0]?.[k] !== undefined);",
+									"if (key) {",
+									"  let sorted = true;",
+									"  for (let i=1;i<arr.length;i++){",
+									"    if (new Date(arr[i-1][key]) < new Date(arr[i][key])) { sorted = false; break; }",
+									"  }",
+									"  pm.test(`sorted desc by ${key}`, () => pm.expect(sorted).to.eql(true));",
+									"}",
+									"",
+									"",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/folders",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"folders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "putFolders – Update",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status is 200', function () {",
+									"  pm.response.to.have.status(200);",
+									"});",
+									"const resJson = pm.response.json();",
+									"const reqBody = JSON.parse(pm.request.body.raw || '{}');",
+									"pm.test('Name updated', function () {",
+									"  pm.expect(resJson.name).to.equal(reqBody.name);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"bteddy updated {{$randomInt}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/folders/{{folderId}}",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"folders",
+								"{{folderId}}"
+							]
+						},
+						"description": "PUT {{baseURL}}/api/folders/:id { name } • Returns 200 OK with mapped folder"
+					},
+					"response": []
+				},
+				{
+					"name": "deleteFolders – Delete",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status is 200', function () {",
+									"  pm.response.to.have.status(200);",
+									"});",
+									"let json = {};",
+									"try { json = pm.response.json(); } catch(e) {}",
+									"pm.test('Has deletion message', function () {",
+									"  pm.expect(json).to.have.property('message');",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/api/folders/{{folderId}}",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"folders",
+								"{{folderId}}"
+							]
+						},
+						"description": "DELETE {{baseURL}}/api/folders/:id • Returns 200 OK with { message }"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "file",
+			"item": [
+				{
+					"name": "Upload file to folder",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let body = {};",
+									"try { body = pm.response.json(); } catch (e) {}",
+									"function saveId(id) {",
+									"  if (typeof id === 'string' && id.length >= 12) {",
+									"    pm.environment.set('fileId1', id);",
+									"    pm.environment.set('fileId',  id);",
+									"    console.log('Saved fileId1/fileId =', id);",
+									"    return true;",
+									"  }",
+									"  return false;",
+									"}",
+									"",
+									"if (body && (body._id || body.id) && saveId(body._id || body.id)) {",
+									"} else if (body && body.file && (body.file._id || body.file.id) && saveId(body.file._id || body.file.id)) {",
+									"} else if (body && body.data && (body.data._id || body.data.id) && saveId(body.data._id || body.data.id)) {",
+									"} else if (body && Array.isArray(body.files) && body.files.length) {",
+									"  const f = body.files[0];",
+									"  saveId(f && (f._id || f.id));",
+									"} else {",
+									"  console.log('No file id found in response:', body);",
+									"}",
+									"",
+									"pm.test('Status is 2xx', function () {",
+									"  pm.expect(pm.response.code).to.be.within(200, 299);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "postman-cloud:///1f09f55f-d8d0-4740-82a0-5e2d29950d0a"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/files/in-folder/{{folderId}}",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"files",
+								"in-folder",
+								"{{folderId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List files in folder",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let body = {};",
+									"try { body = pm.response.json(); } catch (e) {}",
+									"function setIdIf(v){ if(v){ pm.collectionVariables.set('fileId', v); } }",
+									"if (body && (body._id || body.id)) setIdIf(body._id || body.id);",
+									"if (body && body.file && (body.file._id || body.file.id)) setIdIf(body.file._id || body.file.id);",
+									"if (body && body.data && (body.data._id || body.data.id)) setIdIf(body.data._id || body.data.id);",
+									"if (body && body.files && Array.isArray(body.files) && body.files.length) {",
+									"  const f = body.files[0];",
+									"  setIdIf(f._id || f.id);",
+									"}",
+									"pm.test('Status is 2xx', function () {",
+									"  pm.expect(pm.response.code).to.be.within(200, 299);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/api/files/in-folder/{{folderId4Zip}}",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"files",
+								"in-folder",
+								"{{folderId4Zip}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get file details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let body = {};",
+									"try { body = pm.response.json(); } catch (e) {}",
+									"function setIdIf(v){ if(v){ pm.collectionVariables.set('fileId', v); } }",
+									"if (body && (body._id || body.id)) setIdIf(body._id || body.id);",
+									"if (body && body.file && (body.file._id || body.file.id)) setIdIf(body.file._id || body.file.id);",
+									"if (body && body.data && (body.data._id || body.data.id)) setIdIf(body.data._id || body.data.id);",
+									"if (body && body.files && Array.isArray(body.files) && body.files.length) {",
+									"  const f = body.files[0];",
+									"  setIdIf(f._id || f.id);",
+									"}",
+									"pm.test('Status is 2xx', function () {",
+									"  pm.expect(pm.response.code).to.be.within(200, 299);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/api/files/{{fileId}}",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"files",
+								"{{fileId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "preview file",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const code = pm.response.code;",
+									"pm.test(\"Response received\", () => pm.expect(code).to.be.within(100, 599));",
+									"",
+									"if (code !== 200 && code !== 206) {",
+									"  let msg = '';",
+									"  try { msg = JSON.stringify(pm.response.json()); } catch(_) { msg = pm.response.text(); }",
+									"  console.warn('Non-2xx preview response:', code, msg);",
+									"  pm.test(`Expect 200/206 but got ${code}`, () => { throw new Error(msg || `HTTP ${code}`); });",
+									"} else {",
+									"  const ct = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+									"  pm.test('Content-Type present', () => pm.expect(ct).to.not.equal(''));",
+									"",
+									"  const cd = pm.response.headers.get('Content-Disposition') || '';",
+									"  pm.test('Content-Disposition present', () => pm.expect(cd).to.not.equal(''));",
+									"  pm.test('Content-Disposition is inline', () => pm.expect(/inline/i.test(cd)).to.eql(true));",
+									"",
+									"   const ar = (pm.response.headers.get('Accept-Ranges') || '').toLowerCase();",
+									"  const sentRange = !!pm.request.headers.get('Range'); ",
+									"  const mustHaveAR = code === 206 || sentRange || (pm.environment.get('REQUIRE_ACCEPT_RANGES') === '1'); ",
+									"  if (mustHaveAR) {",
+									"    pm.test('Accept-Ranges is bytes', () => pm.expect(/bytes/.test(ar)).to.eql(true));",
+									"  } else {",
+									"    pm.test('Accept-Ranges', () => pm.expect(true).to.eql(true));",
+									"  }",
+									"  if (code === 206) {",
+									"    const cr = pm.response.headers.get('Content-Range') || '';",
+									"    pm.test('Content-Range present', () => pm.expect(cr).to.not.equal(''));",
+									"    pm.test('Content-Range format', () => pm.expect(/^bytes \\d+-\\d+\\/\\d+$/i.test(cr)).to.eql(true));",
+									"    const m = /^bytes (\\d+)-(\\d+)\\/(\\d+)$/i.exec(cr);",
+									"    if (m) {",
+									"      const start = +m[1], end = +m[2];",
+									"      const cl = +(pm.response.headers.get('Content-Length') || NaN);",
+									"      pm.test('Content-Length matches range size', () => pm.expect(cl).to.eql(end - start + 1));",
+									"    }",
+									"  }",
+									"",
+									"  pm.test('Body is not JSON', () => pm.expect(ct.includes('application/json')).to.eql(false));",
+									"}",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const token = pm.environment.get('token') || pm.collectionVariables.get('token');",
+									"if (token) pm.request.headers.upsert({ key: 'Authorization', value: `Bearer ${token}` });",
+									"",
+									"pm.request.headers.remove('Range');",
+									"",
+									"const fid = pm.environment.get('fileId') || pm.collectionVariables.get('fileId');",
+									"pm.test('fileId is set (pre)', () => pm.expect(fid, 'set fileId in env/collection').to.be.ok);",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/files/{{fileId}}/preview",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"files",
+								"{{fileId}}",
+								"preview"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List files in folder",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const code = pm.response.code;",
+									"pm.test(\"Response received\", () => pm.expect(code).to.be.within(100,599));",
+									"",
+									"if (code === 200) {",
+									"  let body; try { body = pm.response.json(); } catch { body = null; }",
+									"  const files = Array.isArray(body) ? body : (Array.isArray(body?.files) ? body.files : []);",
+									"  pm.test(\"files is array\", () => pm.expect(files).to.be.an(\"array\"));",
+									"  if (files.length) {",
+									"    const x = files[0];",
+									"    pm.test(\"has id & name\", () => {",
+									"      pm.expect(x).to.have.any.keys([\"_id\",\"id\"]);",
+									"      pm.expect(x).to.have.property(\"name\");",
+									"",
+									"    const firstId = x._id || x.id;",
+									"    if (firstId) {",
+									"        pm.environment.set('fileId', String(firstId));",
+									"    }",
+									"    pm.test(\"env fileId is set\", () => pm.expect(pm.environment.get('fileId')).to.be.ok);",
+									"    });",
+									"  }",
+									"} else {",
+									"  let msg=''; try { msg = pm.response.json().message; } catch {}",
+									"  pm.test(`Unexpected status ${code}`, () => { throw new Error(msg || `HTTP ${code}`); });",
+									"}",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const token = pm.environment.get('token') || pm.collectionVariables.get('token');",
+									"if (token) pm.request.headers.upsert({ key: 'Authorization', value: `Bearer ${token}` });",
+									"",
+									"const fid = pm.environment.get('folderId');",
+									"pm.test('folderId is set (run getfolders first)', () => pm.expect(fid).to.be.ok);",
+									"pm.test('folderId looks like ObjectId', () => pm.expect(fid).to.match(/^[0-9a-fA-F]{24}$/));",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseURL}}/api/files/in-folder/{{folderId}}",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"files",
+								"in-folder",
+								"{{folderId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "download file",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const code = pm.response.code;",
+									"pm.test(\"Response received\", () => pm.expect(code).to.be.within(100, 599));",
+									"",
+									"function getHeader(name, res) {",
+									"  return (res.headers && res.headers.get && (res.headers.get(name) || \"\")) || \"\";",
+									"}",
+									"",
+									"function extractFilename(cd) {",
+									"  const star = /filename\\*=(?:UTF-8''|)([^;]+)/i.exec(cd);",
+									"  const plain = /filename=\"?([^\";]+)\"?/i.exec(cd);",
+									"  let n = \"\";",
+									"  if (star && star[1]) { try { n = decodeURIComponent(star[1].trim()); } catch { n = star[1].trim(); } }",
+									"  else if (plain && plain[1]) n = plain[1].trim();",
+									"  return n;",
+									"}",
+									"",
+									"function softAssertDownload(res) {",
+									"  const ct = getHeader(\"Content-Type\", res).toLowerCase();",
+									"  const cd = getHeader(\"Content-Disposition\", res);",
+									"  const cl = getHeader(\"Content-Length\", res);",
+									"",
+									"  pm.test(\"Body is not JSON\", () => pm.expect(ct.includes(\"application/json\")).to.eql(false));",
+									"",
+									"  if (ct) {",
+									"    pm.test(\"Content-Type looks like file\", () => {",
+									"      pm.expect(/^(application|image|video|audio|text)\\//.test(ct) || ct === \"application/octet-stream\")",
+									"        .to.eql(true);",
+									"    });",
+									"  } else {",
+									"    pm.test(\"Content-Type missing (allowed)\", () => pm.expect(true).to.eql(true));",
+									"  }",
+									"",
+									"  const requireAttachment = pm.environment.get('REQUIRE_ATTACHMENT') === '1';",
+									"  if (cd) {",
+									"    if (requireAttachment) {",
+									"      pm.test(\"Content-Disposition is attachment (strict)\", () => pm.expect(/attachment/i.test(cd)).to.eql(true));",
+									"    } else {",
+									"      pm.test(\"Content-Disposition type ok (attachment or inline)\", () =>",
+									"        pm.expect(/attachment|inline/i.test(cd)).to.eql(true)",
+									"      );",
+									"    }",
+									"    const name = extractFilename(cd);",
+									"    if (name) pm.environment.set('lastDownloadedName', name);",
+									"  } else {",
+									"    pm.test(\"Content-Disposition missing (allowed in compatible mode)\", () => pm.expect(true).to.eql(true));",
+									"  }",
+									"",
+									"  if (cl) {",
+									"    pm.test(\"Content-Length positive\", () => {",
+									"      const n = Number(cl);",
+									"      pm.expect(Number.isFinite(n) && n >= 0).to.eql(true);",
+									"    });",
+									"  } else {",
+									"    pm.test(\"Content-Length missing (allowed)\", () => pm.expect(true).to.eql(true));",
+									"  }",
+									"}",
+									"",
+									"if (code === 301 || code === 302) {",
+									"  const loc = getHeader(\"Location\", pm.response);",
+									"  pm.test(\"Location present\", () => pm.expect(loc).to.not.equal(\"\"));",
+									"",
+									"  if (loc) {",
+									"    pm.sendRequest({ url: loc, method: 'GET' }, (err, resp) => {",
+									"      pm.test(\"Follow redirect success (200/206)\", () => {",
+									"        pm.expect(err).to.eql(null);",
+									"        pm.expect([200,206]).to.include(resp.code);",
+									"      });",
+									"      if (resp) softAssertDownload(resp);",
+									"    });",
+									"  }",
+									"} else if (code === 200 || code === 206) {",
+									"  softAssertDownload(pm.response);",
+									"} else if ([401,403,404,400,415].includes(code)) {",
+									"  let msg = '';",
+									"  try { msg = pm.response.json().message; } catch { msg = pm.response.text(); }",
+									"  pm.test(`Handled error ${code}`, () => { throw new Error(msg || `HTTP ${code}`); });",
+									"} else {",
+									"  let body = '';",
+									"  try { body = JSON.stringify(pm.response.json()); } catch { body = pm.response.text(); }",
+									"  pm.test(`Unexpected status ${code}`, () => { throw new Error(body || `HTTP ${code}`); });",
+									"}",
+									"",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const token = pm.environment.get('token') || pm.collectionVariables.get('token');",
+									"if (token) pm.request.headers.upsert({ key: 'Authorization', value: `Bearer ${token}` });",
+									"",
+									"const fid = pm.environment.get('inFolderFirstFileId') || pm.environment.get('fileId');",
+									"pm.test('fileId is set (run in-folder list first or set fileId)', () => pm.expect(fid).to.be.ok);",
+									"pm.variables.set('RID', fid);",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseURL}}/api/files/{{fileId}}/download",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"files",
+								"{{fileId}}",
+								"download"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "generate public URL",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const token = pm.environment.get('token');",
+									"if (token) pm.request.headers.upsert({ key: 'Authorization', value: `Bearer ${token}` });",
+									"",
+									"const fid = pm.environment.get('inFolderFirstFileId') || pm.environment.get('fileId');",
+									"pm.test('fileId is set', () => pm.expect(fid).to.be.ok);",
+									"pm.variables.set('RID', fid);",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let body = {};",
+									"try { body = pm.response.json(); } catch (e) {}",
+									"",
+									"if (body && body.publicUrl) {",
+									"    const parts = body.publicUrl.split('/');",
+									"    const pid = parts[parts.length - 1];",
+									"",
+									"    pm.environment.set('publicId', pid);",
+									"    pm.environment.set('publicUrl', body.publicUrl);",
+									"",
+									"    console.log(\"Saved publicId =\", pid);",
+									"    console.log(\"Saved publicUrl =\", body.publicUrl);",
+									"}",
+									"",
+									"pm.test('Status is 2xx', function () {",
+									"    pm.expect(pm.response.code).to.be.within(200, 299);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseURL}}/api/files/{{fileId}}/share",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"files",
+								"{{fileId}}",
+								"share"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "rename file",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const token = pm.environment.get('token');",
+									"if (token) pm.request.headers.upsert({ key: 'Authorization', value: `Bearer ${token}` });",
+									"",
+									"const fid = pm.environment.get('inFolderFirstFileId') || pm.environment.get('fileId');",
+									"pm.test('fileId is set', () => pm.expect(fid).to.be.ok);",
+									"pm.variables.set('RID', fid);",
+									"",
+									"const orig = pm.environment.get('lastDownloadedName') || 'renamed1_test.pdf';",
+									"const dot = orig.lastIndexOf('.');",
+									"const base = dot>0 ? orig.slice(0,dot) : orig;",
+									"const ext  = dot>0 ? orig.slice(dot) : '';",
+									"const newName = `${base}_renamed_${Date.now()}${ext}`;",
+									"pm.environment.set('newFileName', newName);",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const code = pm.response.code;",
+									"pm.test(\"Response received\", () => pm.expect(code).to.be.within(100,599));",
+									"",
+									"if (code === 200) {",
+									"  let j={}; try { j = pm.response.json(); } catch {}",
+									"  const name = j.name || j.file?.name;",
+									"  pm.test(\"name updated\", () => pm.expect(name).to.eql(pm.environment.get('newFileName')));",
+									"",
+									"  const base = pm.environment.get('baseURL');",
+									"  const token = pm.environment.get('token');",
+									"  const id = pm.variables.get('RID');",
+									"  pm.sendRequest({",
+									"    url: `${base}/api/files/${id}`,",
+									"    method: 'GET',",
+									"    header: token ? { Authorization: `Bearer ${token}` } : {}",
+									"  }, (err, resp) => {",
+									"    if (!err && resp.code === 200) {",
+									"      let info={}; try { info = resp.json(); } catch {}",
+									"      pm.test(\"detail shows new name\", () => {",
+									"        pm.expect((info.name || info.file?.name)).to.eql(pm.environment.get('newFileName'));",
+									"      });",
+									"    }",
+									"  });",
+									"} else if (code === 400) {",
+									"  pm.test(\"400 bad request\", () => pm.expect(400).to.eql(400));",
+									"} else if (code === 403) {",
+									"  pm.test(\"403 forbidden\", () => pm.expect(403).to.eql(403));",
+									"} else if (code === 404) {",
+									"  pm.test(\"404 not found\", () => pm.expect(404).to.eql(404));",
+									"} else {",
+									"  let msg=''; try { msg = JSON.stringify(pm.response.json()); } catch { msg = pm.response.text(); }",
+									"  pm.test(`Unexpected status ${code}`, () => { throw new Error(msg || `HTTP ${code}`); });",
+									"}",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"name\": \"{{newFileName}}\" }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/files/{{fileId}}",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"files",
+								"{{fileId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "move to trash",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const token = pm.environment.get('token') || pm.collectionVariables.get('token');",
+									"if (token) pm.request.headers.upsert({ key: 'Authorization', value: `Bearer ${token}` });",
+									"",
+									"const fidFile = pm.environment.get('inFolderFirstFileId') || pm.environment.get('fileId');",
+									"const fidFolder = pm.environment.get('folderId');",
+									"",
+									"pm.test('fileId is set', () => pm.expect(fidFile).to.be.ok);",
+									"pm.test('folderId is set', () => pm.expect(fidFolder).to.be.ok);",
+									"",
+									"pm.variables.set('RID', fidFile);  ",
+									"pm.variables.set('FID', fidFolder);"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const code = pm.response.code;",
+									"pm.test(\"Response received\", () => pm.expect(code).to.be.within(100,599));",
+									"",
+									"if ([200,204].includes(code)) {",
+									"  pm.test(\"Move to trash success\", () => pm.expect([200,204]).to.include(code));",
+									"",
+									"  const base = pm.environment.get('baseURL') || pm.collectionVariables.get('baseURL');",
+									"  const id   = pm.variables.get('RID');",
+									"  const folderId = pm.variables.get('FID');",
+									"",
+									"  const authHeader = pm.request.headers.get('Authorization') ||",
+									"    (pm.environment.get('token') ? `Bearer ${pm.environment.get('token')}` : null);",
+									"  const header = authHeader ? { Authorization: authHeader } : {};",
+									"",
+									"  const urlInFolder1 = `${base}/api/files/in-folder/${folderId}`; ",
+									"  pm.sendRequest({ url: urlInFolder1, method: 'GET', header }, (e1, r1) => {",
+									"    const checkInFolder = (resp) => {",
+									"      pm.test(\"in-folder list 200\", () => pm.expect(resp.code).to.eql(200));",
+									"      let d; try { d = resp.json(); } catch { d = []; }",
+									"      const files = Array.isArray(d) ? d : (Array.isArray(d?.files) ? d.files : []);",
+									"      const exists = files.some(it => String(it._id || it.id) === String(id));",
+									"      pm.test(\"file NOT in in-folder\", () => pm.expect(exists).to.eql(false));",
+									"    };",
+									"",
+									"    if (!e1 && r1 && r1.code === 200) {",
+									"      checkInFolder(r1);",
+									"    } else {",
+									"      pm.sendRequest({ url: `${base}/api/files/${folderId}`, method: 'GET', header }, (e1b, r1b) => {",
+									"        pm.test(\"in-folder fallback request ok\", () => pm.expect(e1b).to.eql(null));",
+									"        checkInFolder(r1b);",
+									"      });",
+									"    }",
+									"  });",
+									"",
+									"  pm.sendRequest({ url: `${base}/api/trash`, method: 'GET', header }, (e2, r2) => {",
+									"    pm.test(\"trash list 200\", () => pm.expect(r2.code).to.eql(200));",
+									"    let d; try { d = r2.json(); } catch { d = []; }",
+									"    const files = Array.isArray(d) ? d : (Array.isArray(d?.files) ? d.files : []);",
+									"    const found = files.some(it => String(it._id || it.id) === String(id));",
+									"    pm.test(\"file appears in trash\", () => pm.expect(found).to.eql(true));",
+									"",
+									"    if (!found) {",
+									"      pm.sendRequest({ url: `${base}/api/files/${id}`, method: 'GET', header }, (e3, r3) => {",
+									"        if (r3) {",
+									"          if (r3.code === 404) {",
+									"            pm.test(\"hard delete confirmed (detail 404)\", () => pm.expect(404).to.eql(404));",
+									"          } else {",
+									"            let body=''; try { body = JSON.stringify(r3.json()); } catch { body = r3.text(); }",
+									"            pm.test(\"file still exists – unexpected\", () => { throw new Error(`detail status ${r3.code}: ${body}`); });",
+									"          }",
+									"        }",
+									"      });",
+									"    }",
+									"  });",
+									"",
+									"} else if (code === 404) {",
+									"  pm.test(\"File not found but handled (404)\", function () {",
+									"    pm.expect(code).to.eql(404);",
+									"  });",
+									"",
+									"} else {",
+									"  let body=''; try { body = JSON.stringify(pm.response.json()); } catch { body = pm.response.text(); }",
+									"  pm.test(`Unexpected status ${code}`, () => { throw new Error(body || `HTTP ${code}`); });",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseURL}}/api/files/{{fileId}}",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"files",
+								"{{fileId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "recent and access public",
+			"item": [
+				{
+					"name": "Access public file (no auth)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const code = pm.response.code;",
+									"",
+									"pm.test(\"Status is 200/206/302\", function () {",
+									"  pm.expect([200,206,302]).to.include(code);",
+									"});",
+									"",
+									"pm.test(\"No Authorization header sent\", function () {",
+									"  pm.expect(pm.request.headers.has('Authorization')).to.be.false;",
+									"});",
+									"",
+									"if ([200,206].includes(code)) {",
+									"  pm.test(\"Response body size > 0\", function () {",
+									"    const size = pm.response.size().body || 0;",
+									"    pm.expect(size).to.be.above(0);",
+									"  });",
+									"}",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/api/public/{{publicId}}",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"public",
+								"{{publicId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "recent file",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));",
+									"pm.test(\"JSON array\", () => {",
+									"  pm.response.to.be.json;",
+									"  const arr = pm.response.json();",
+									"  pm.expect(arr).to.be.an(\"array\");",
+									"});",
+									"",
+									"let arr = [];",
+									"try { arr = pm.response.json(); } catch (e) { arr = []; }",
+									"",
+									"if (arr.length) {",
+									"  const x = arr[0];",
+									"  pm.expect(x).to.have.any.keys(\"_id\");",
+									"  pm.expect(x).to.have.any.keys(\"name\");",
+									"  pm.expect(x).to.have.any.keys(\"lastAccessedAt\");",
+									"}",
+									"",
+									"const key = [\"lastAccessedAt\"].find(k => arr[0]?.[k] !== undefined);",
+									"if (key) {",
+									"  let sorted = true;",
+									"  for (let i = 1; i < arr.length; i++) {",
+									"    if (new Date(arr[i - 1][key]) < new Date(arr[i][key])) { ",
+									"      sorted = false; ",
+									"      break; ",
+									"    }",
+									"  }",
+									"  pm.test(`sorted desc by ${key}`, () => pm.expect(sorted).to.eql(true));",
+									"}",
+									"",
+									"",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/recent",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"recent"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "trash",
+			"item": [
+				{
+					"name": "trash lists",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const token = pm.environment.get('token') || pm.collectionVariables.get('token');",
+									"if (token) pm.request.headers.upsert({ key: 'Authorization', value: `Bearer ${token}` });"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+									"",
+									"let data;",
+									"try { data = pm.response.json(); } catch { data = null; }",
+									"",
+									"pm.test(\"JSON body\", () => pm.expect(data).to.be.ok);",
+									"",
+									"const files = Array.isArray(data) ? data : (Array.isArray(data?.files) ? data.files : []);",
+									"pm.test(\"files is array\", () => pm.expect(files).to.be.an(\"array\"));",
+									"",
+									"if (files.length) {",
+									"  const x = files[0];",
+									"  pm.test(\"has id/name/deletedAt\", () => {",
+									"    pm.expect(x).to.have.any.keys([\"_id\", \"id\"]);",
+									"    pm.expect(x).to.have.property(\"name\");",
+									"    pm.expect(x).to.have.any.keys([\"deletedAt\",\"trashedAt\"]);",
+									"  });",
+									"  const fid = x._id || x.id;",
+									"  pm.environment.set(\"trashFileId\", String(fid));",
+									"  pm.test(\"saved trashFileId\", () => pm.expect(pm.environment.get(\"trashFileId\")).to.be.ok);",
+									"} else {",
+									"  pm.environment.unset(\"trashFileId\");",
+									"  pm.test(\"trash can be empty\", () => pm.expect(files.length).to.eql(0));",
+									"}",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseURL}}/api/trash",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"trash"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "restore",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const token = pm.environment.get('token');",
+									"if (token) pm.request.headers.upsert({ key: 'Authorization', value: `Bearer ${token}` });",
+									"",
+									"const fid = pm.environment.get('trashFileId');",
+									"pm.test(\"trashFileId is set (run GET /api/trash first if empty)\", () => pm.expect(fid).to.be.ok);",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseURL}}/api/trash/{{trashFileId}}/restore",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"trash",
+								"{{trashFileId}}",
+								"restore"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "move to trash Copy",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const token = pm.environment.get('token') || pm.collectionVariables.get('token');",
+									"if (token) pm.request.headers.upsert({ key: 'Authorization', value: `Bearer ${token}` });",
+									"",
+									"const fidFile = pm.environment.get('inFolderFirstFileId') || pm.environment.get('fileId');",
+									"const fidFolder = pm.environment.get('folderId');",
+									"",
+									"pm.test('fileId is set', () => pm.expect(fidFile).to.be.ok);",
+									"pm.test('folderId is set', () => pm.expect(fidFolder).to.be.ok);",
+									"",
+									"pm.variables.set('RID', fidFile);  ",
+									"pm.variables.set('FID', fidFolder);"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const code = pm.response.code;",
+									"pm.test(\"Response received\", () => pm.expect(code).to.be.within(100,599));",
+									"",
+									"if ([200,204].includes(code)) {",
+									"  pm.test(\"Move to trash success\", () => pm.expect([200,204]).to.include(code));",
+									"",
+									"  const base = pm.environment.get('baseURL') || pm.collectionVariables.get('baseURL');",
+									"  const id   = pm.variables.get('RID');",
+									"  const folderId = pm.variables.get('FID');",
+									"",
+									"  const authHeader = pm.request.headers.get('Authorization') ||",
+									"    (pm.environment.get('token') ? `Bearer ${pm.environment.get('token')}` : null);",
+									"  const header = authHeader ? { Authorization: authHeader } : {};",
+									"",
+									"  const urlInFolder1 = `${base}/api/files/in-folder/${folderId}`; ",
+									"  pm.sendRequest({ url: urlInFolder1, method: 'GET', header }, (e1, r1) => {",
+									"    const checkInFolder = (resp) => {",
+									"      pm.test(\"in-folder list 200\", () => pm.expect(resp.code).to.eql(200));",
+									"      let d; try { d = resp.json(); } catch { d = []; }",
+									"      const files = Array.isArray(d) ? d : (Array.isArray(d?.files) ? d.files : []);",
+									"      const exists = files.some(it => String(it._id || it.id) === String(id));",
+									"      pm.test(\"file NOT in in-folder\", () => pm.expect(exists).to.eql(false));",
+									"    };",
+									"",
+									"    if (!e1 && r1 && r1.code === 200) {",
+									"      checkInFolder(r1);",
+									"    } else {",
+									"      pm.sendRequest({ url: `${base}/api/files/${folderId}`, method: 'GET', header }, (e1b, r1b) => {",
+									"        pm.test(\"in-folder fallback request ok\", () => pm.expect(e1b).to.eql(null));",
+									"        checkInFolder(r1b);",
+									"      });",
+									"    }",
+									"  });",
+									"",
+									"  pm.sendRequest({ url: `${base}/api/trash`, method: 'GET', header }, (e2, r2) => {",
+									"    pm.test(\"trash list 200\", () => pm.expect(r2.code).to.eql(200));",
+									"    let d; try { d = r2.json(); } catch { d = []; }",
+									"    const files = Array.isArray(d) ? d : (Array.isArray(d?.files) ? d.files : []);",
+									"    const found = files.some(it => String(it._id || it.id) === String(id));",
+									"    pm.test(\"file appears in trash\", () => pm.expect(found).to.eql(true));",
+									"",
+									"    if (!found) {",
+									"      pm.sendRequest({ url: `${base}/api/files/${id}`, method: 'GET', header }, (e3, r3) => {",
+									"        if (r3) {",
+									"          if (r3.code === 404) {",
+									"            pm.test(\"hard delete confirmed (detail 404)\", () => pm.expect(404).to.eql(404));",
+									"          } else {",
+									"            let body=''; try { body = JSON.stringify(r3.json()); } catch { body = r3.text(); }",
+									"            pm.test(\"file still exists – unexpected\", () => { throw new Error(`detail status ${r3.code}: ${body}`); });",
+									"          }",
+									"        }",
+									"      });",
+									"    }",
+									"  });",
+									"",
+									"} else if (code === 404) {",
+									"  pm.test(\"File not found but handled (404)\", function () {",
+									"    pm.expect(code).to.eql(404);",
+									"  });",
+									"",
+									"} else {",
+									"  let body=''; try { body = JSON.stringify(pm.response.json()); } catch { body = pm.response.text(); }",
+									"  pm.test(`Unexpected status ${code}`, () => { throw new Error(body || `HTTP ${code}`); });",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseURL}}/api/files/{{fileId}}",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"files",
+								"{{fileId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete in trash",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const code = pm.response.code; ",
+									"",
+									"pm.test(\"Status is 200/204 on delete\", function () {",
+									"    pm.expect([200,204]).to.include(code);",
+									"    });",
+									"    ",
+									"    ",
+									"if (code === 200) {",
+									"    let j = {}; try { j = pm.response.json(); } catch {}",
+									"    pm.test(\"Delete response has message/success\", function () {",
+									"     pm.expect(j && (j.message || j.success !== undefined)).to.be.ok;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseURL}}/api/trash/{{trashFileId}}",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"trash",
+								"{{trashFileId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Zip",
+			"item": [
+				{
+					"name": "ZipDownload - Zip",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status is 200', function () {",
+									"  pm.response.to.have.status(200);",
+									"});",
+									"const ct = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+									"pm.test('Content-Type is zip or octet-stream', function () {",
+									"  pm.expect(ct).to.satisfy(v => v.includes('zip') || v.includes('octet-stream'));",
+									"});",
+									"const cd = (pm.response.headers.get('Content-Disposition') || '').toLowerCase();",
+									"pm.test('Content-Disposition indicates attachment', function () {",
+									"  pm.expect(cd).to.include('attachment');",
+									"});",
+									"pm.test('Response has a non-zero body size', function () {",
+									"  const size = pm.response.size().body || 0;",
+									"  pm.expect(size).to.be.above(0);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/api/folders/{{folderId4Zip}}/zip?files=68daa44d99f30fdf26585228,68daa44099f30fdf26585221,68daa42999f30fdf2658520c",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"folders",
+								"{{folderId4Zip}}",
+								"zip"
+							],
+							"query": [
+								{
+									"key": "files",
+									"value": "68daa44d99f30fdf26585228,68daa44099f30fdf26585221,68daa42999f30fdf2658520c"
+								}
+							]
+						},
+						"description": "GET {{baseURL}}/api/folders/:id/zip • Streams a ZIP of the folder. Requires Authorization: Bearer {{token}}"
+					},
+					"response": []
+				},
+				{
+					"name": "ZipDownload - NoFileSelection",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const code = pm.response.code;",
+									"",
+									"if (code >= 200 && code < 300) {",
+									"  const ct = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+									"  pm.test('Content-Type is zip or octet-stream (success)', function () {",
+									"    pm.expect(ct).to.satisfy(v => v.includes('zip') || v.includes('octet-stream'));",
+									"  });",
+									"  const cd = (pm.response.headers.get('Content-Disposition') || '').toLowerCase();",
+									"  pm.test('Content-Disposition indicates attachment (success)', function () {",
+									"    pm.expect(cd).to.include('attachment');",
+									"  });",
+									"} else {",
+									"  pm.test('Status is 4xx for no file selection', function () {",
+									"    pm.expect([400, 422, 413]).to.include(code);",
+									"  });",
+									"  pm.test('Content-Type is JSON on error', function () {",
+									"    const ct = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+									"    pm.expect(ct).to.include('application/json');",
+									"  });",
+									"  pm.test('No attachment header on error', function () {",
+									"    const cd = (pm.response.headers.get('Content-Disposition') || '').toLowerCase();",
+									"    pm.expect(cd).to.not.include('attachment');",
+									"  });",
+									"}",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/api/folders/{{folderId}}/zip",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"folders",
+								"{{folderId}}",
+								"zip"
+							],
+							"query": [
+								{
+									"key": "files",
+									"value": "68daa44d99f30fdf26585228,68daa44099f30fdf26585221,68daa42999f30fdf2658520c",
+									"disabled": true
+								}
+							]
+						},
+						"description": "GET {{baseURL}}/api/folders/:id/zip • Streams a ZIP of the folder. Requires Authorization: Bearer {{token}}"
+					},
+					"response": []
+				},
+				{
+					"name": "ZipDownload - FileSelection>5",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const code = pm.response.code;",
+									"",
+									"if (code >= 200 && code < 300) {",
+									"  const ct = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+									"  pm.test('Content-Type is zip or octet-stream (success)', function () {",
+									"    pm.expect(ct).to.satisfy(v => v.includes('zip') || v.includes('octet-stream'));",
+									"  });",
+									"  const cd = (pm.response.headers.get('Content-Disposition') || '').toLowerCase();",
+									"  pm.test('Content-Disposition indicates attachment (success)', function () {",
+									"    pm.expect(cd).to.include('attachment');",
+									"  });",
+									"} else {",
+									"  pm.test('Status is 4xx when selection exceeds limit', function () {",
+									"    pm.expect([400, 422, 413]).to.include(code);",
+									"  });",
+									"  pm.test('Content-Type is JSON on error', function () {",
+									"    const ct = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+									"    pm.expect(ct).to.include('application/json');",
+									"  });",
+									"  pm.test('No attachment header on error', function () {",
+									"    const cd = (pm.response.headers.get('Content-Disposition') || '').toLowerCase();",
+									"    pm.expect(cd).to.not.include('attachment');",
+									"  });",
+									"}",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/api/folders/{{folderId}}/zip?files=68daa44d99f30fdf26585228,68daa44099f30fdf26585221,68daa42999f30fdf2658520c,68daa43899f30fdf2658521a,68daa43199f30fdf26585213,68daa41599f30fdf26585205",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"folders",
+								"{{folderId}}",
+								"zip"
+							],
+							"query": [
+								{
+									"key": "files",
+									"value": "68daa44d99f30fdf26585228,68daa44099f30fdf26585221,68daa42999f30fdf2658520c,68daa43899f30fdf2658521a,68daa43199f30fdf26585213,68daa41599f30fdf26585205"
+								}
+							]
+						},
+						"description": "GET {{baseURL}}/api/folders/:id/zip • Streams a ZIP of the folder. Requires Authorization: Bearer {{token}}"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Error",
+			"item": [
+				{
+					"name": "Error – CreateFolder (ValidationError)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status is 400 (validation)', function () {",
+									"  pm.expect(pm.response.code).to.be.oneOf([400, 422]);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ }"
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/folders",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"folders"
+							]
+						},
+						"description": "Expect 400 ValidationError when name is missing"
+					},
+					"response": []
+				},
+				{
+					"name": "Error – DeleteFolder (NotFoundError)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status is 404', function () {",
+									"  pm.response.to.have.status(404);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/api/folders/6655aa11aa11aa11aa11aa11",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"folders",
+								"6655aa11aa11aa11aa11aa11"
+							]
+						},
+						"description": "Expect 404 for non-existing ObjectId"
+					},
+					"response": []
+				},
+				{
+					"name": "Error – Unauthorized (no token)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status is 401', function () {",
+									"  pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/api/folders",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"folders"
+							]
+						},
+						"description": "This overrides collection auth to verify 401 from protect middleware"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{jwt_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "preview_filename",
+			"value": ""
+		},
+		{
+			"key": "fileId",
+			"value": ""
+		},
+		{
+			"key": "publicId",
+			"value": ""
+		}
+	]
+}

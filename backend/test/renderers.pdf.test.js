@@ -3,17 +3,17 @@ import sinon from 'sinon';
 import { Readable } from 'stream';
 import PdfPreviewer from '../services/preview/renderers/PdfPreviewer.js';
 
-describe('PdfPreviewer (unit)', () => {
+describe('PdfPreviewer tests', () => {
   const fakeStorage = { stream: sinon.stub() };
   const sut = new PdfPreviewer({ storage: fakeStorage });
 
-  it('supports only application/pdf', () => {
+  it('should support only application/pdf', () => {
     expect(sut.supports('application/pdf')).to.equal(true);
     expect(sut.supports('image/png')).to.equal(false);
     expect(sut.supports('text/plain')).to.equal(false);
   });
 
-  it('render() returns stream + inline headers', async () => {
+  it('should return stream + inline headers', async () => {
     fakeStorage.stream.returns({ stream: Readable.from(Buffer.from('%PDF-1.7')) });
 
     const file = { filePath: '/tmp/a.pdf', mimetype: 'application/pdf', name: 'a.pdf' };

@@ -27,7 +27,7 @@ require.cache[errorsDepId] = { id: errorsDepId, filename: errorsDepId, loaded: t
 
 const TrashService = require('../services/TrashService.js');
 
-describe('TrashService (Mocha+Chai only, function tests)', () => {
+describe('TrashService tests', () => {
   const userId = 'u_001';
   let storage, svc;
 

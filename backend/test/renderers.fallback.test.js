@@ -1,8 +1,8 @@
 import { expect } from 'chai';
 import FallbackPreviewer from '../services/preview/renderers/FallbackPreviewer.js';
 
-describe('FallbackPreviewer (unit)', () => {
-  it('render() results in 415 for unsupported types', async () => {
+describe('FallbackPreviewer test', () => {
+  it('render() should result in 415 for unsupported types', async () => {
     const sut = new FallbackPreviewer();
     try {
       const out = await sut.render({ file: { mimetype: 'application/zip' } });

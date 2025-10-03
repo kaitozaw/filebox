@@ -1,0 +1,12 @@
+[2025-09-15T01:33:52.581Z] Recorded audit log: User 68c15d50bf0bcee4c4c837d2, Folder 68c15d65bf0bcee4c4c837da, Files 2
+[2025-09-15T01:33:59.193Z] Recorded audit log: User 68c15d50bf0bcee4c4c837d2, Folder 68c15d65bf0bcee4c4c837da, Files 3
+[2025-09-15T04:54:06.471Z] Recorded audit log: User 68c15d50bf0bcee4c4c837d2, Folder 68c15d65bf0bcee4c4c837da, Files 4
+[2025-09-29T15:23:21.472Z] [ZIP_CREATED] user=68daa3d099f30fdf265851f3 folder=68daa3ec99f30fdf265851fb files=3 createdAt=Tue Sep 30 2025 01:23:21 GMT+1000 (Australian Eastern Standard Time) action=auditLog
+[2025-09-29T15:26:12.593Z] [ZIP_CREATED] user=68daa3d099f30fdf265851f3 folder=68daa3ec99f30fdf265851fb files=4 createdAt=Tue Sep 30 2025 01:26:12 GMT+1000 (Australian Eastern Standard Time) action=auditLog
+[2025-09-30T12:03:59.200Z] Failed to record audit log: AuditLog validation failed: user: Cast to ObjectId failed for value "user-123" (type string) at path "user" because of "BSONTypeError", folder: Cast to ObjectId failed for value "folder-456" (type string) at path "folder" because of "BSONTypeError"
+[2025-09-30T12:03:59.205Z] Failed to record audit log: AuditLog validation failed: user: Cast to ObjectId failed for value "user-123" (type string) at path "user" because of "BSONTypeError", folder: Cast to ObjectId failed for value "folder-456" (type string) at path "folder" because of "BSONTypeError"
+[2025-09-30T13:25:53.439Z] [ZIP_CREATED] user=68daa3d099f30fdf265851f3 folder=68daa3ec99f30fdf265851fb files=1 createdAt=Tue Sep 30 2025 23:25:53 GMT+1000 (Australian Eastern Standard Time) action=auditLog
+[2025-10-01T16:14:51.170Z] [ZIP_CREATED] user=68daa3d099f30fdf265851f3 folder=68daa3ec99f30fdf265851fb files=3 createdAt=Thu Oct 02 2025 02:14:51 GMT+1000 (Australian Eastern Standard Time) action=auditLog
+[2025-10-01T16:15:16.638Z] [ZIP_CREATED] user=68daa3d099f30fdf265851f3 folder=68daa3ec99f30fdf265851fb files=3 createdAt=Thu Oct 02 2025 02:15:16 GMT+1000 (Australian Eastern Standard Time) action=auditLog
+[2025-10-01T16:18:30.211Z] [ZIP_CREATED] user=68daa3d099f30fdf265851f3 folder=68daa3ec99f30fdf265851fb files=3 createdAt=Thu Oct 02 2025 02:18:30 GMT+1000 (Australian Eastern Standard Time) action=auditLog
+[2025-10-01T16:18:37.874Z] [ZIP_CREATED] user=68daa3d099f30fdf265851f3 folder=68daa3ec99f30fdf265851fb files=3 createdAt=Thu Oct 02 2025 02:18:37 GMT+1000 (Australian Eastern Standard Time) action=auditLog

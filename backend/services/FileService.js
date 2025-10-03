@@ -28,9 +28,9 @@ class FileService {
         if (!folder) throw new NotFoundError('Folder not found');
         if (folder.user.toString() !== userId) throw new ForbiddenError('Not authorized to view this folder');
         return File.find({
-            user: userId,               
+            user: userId,
             folder: folder._id,
-            $or: [                       
+            $or: [
               { deletedAt: { $exists: false } },
               { deletedAt: null }
             ]
